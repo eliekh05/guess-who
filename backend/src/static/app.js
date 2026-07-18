@@ -190,7 +190,7 @@
     const board = document.getElementById('select-board');
     board.innerHTML = '';
 
-    const chars = gameState.players.b.board;
+    const chars = gameState.players[player].board;
     chars.forEach((char) => {
       board.appendChild(renderCharacterCard(char, { selectable: true }));
     });
@@ -451,7 +451,10 @@
       const oldStatus = gameState?.status;
       gameState = data.state;
 
-      if (gameState.status === 'playing' && oldStatus !== 'playing') {
+      if (gameState.status === 'choosing' && oldStatus === 'waiting') {
+        // Opponent joined — show character select
+        showCharacterSelect();
+      } else if (gameState.status === 'playing' && oldStatus !== 'playing') {
         startGame();
       } else if (gameState.status === 'playing') {
         updateTurnDisplay();
