@@ -111,6 +111,10 @@ Set these as GitHub Actions secrets for deployment:
 
 ---
 
+## Status
+
+[![Deploy to Cloudflare Workers](https://github.com/eliekh05/guess-who/actions/workflows/deploy.yml/badge.svg)](https://github.com/eliekh05/guess-who/actions/workflows/deploy.yml)
+
 ## License
 
 [MIT](LICENSE)
