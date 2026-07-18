@@ -1,0 +1,29 @@
+{
+  "name": "guess-who",
+  "main": "src/index.js",
+  "compatibility_date": "2026-07-14",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+
+  "assets": {
+    "directory": "./src/static"
+  },
+
+  "kv_namespaces": [
+    {
+      "binding": "GAME_SESSIONS",
+      "id": "4de9f16dab3f440a9d8ff49fccea7cd7"
+    },
+    {
+      "binding": "CHARACTER_CACHE",
+      "id": "777b512c567b41edb4641857326d1589"
+    }
+  ],
+
+  "env": {
+    "production": {
+      "name": "guess-who"
+    }
+  }
+}
