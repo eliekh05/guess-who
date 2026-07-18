@@ -16,6 +16,3 @@ id = "777b512c567b41edb4641857326d1589"
 
 [env.production]
 name = "guess-who"
-
-[env.preview]
-name = "guess-who-preview"
