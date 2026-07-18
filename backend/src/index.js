@@ -19,7 +19,11 @@ export default {
       return addCors(Response.json({ status: 'ok', timestamp: Date.now() }));
     }
 
-    return env.ASSETS.fetch(request);
+    // Serve static assets via ASSETS binding, or return 404
+    if (env.ASSETS) {
+      return env.ASSETS.fetch(request);
+    }
+    return addCors(new Response('Not Found', { status: 404 }));
   },
 };
 
