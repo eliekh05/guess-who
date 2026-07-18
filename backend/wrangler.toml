@@ -1,6 +1,6 @@
 name = "guess-who"
 main = "src/index.js"
-compatibility_date = "2024-09-25"
+compatibility_date = "2026-07-14"
 compatibility_flags = ["nodejs_compat"]
 
 [site]
@@ -8,13 +8,11 @@ bucket = "./src/static"
 
 [[kv_namespaces]]
 binding = "GAME_SESSIONS"
-id = "placeholder-session-kv"
-preview_id = "placeholder-session-pv"
+id = "4de9f16dab3f440a9d8ff49fccea7cd7"
 
 [[kv_namespaces]]
 binding = "CHARACTER_CACHE"
-id = "placeholder-character-kv"
-preview_id = "placeholder-character-pv"
+id = "777b512c567b41edb4641857326d1589"
 
 [env.production]
 name = "guess-who"
