@@ -7,7 +7,8 @@
   ],
 
   "assets": {
-    "directory": "./src/static"
+    "directory": "./src/static",
+    "not_found_handling": "single-page-application"
   },
 
   "kv_namespaces": [

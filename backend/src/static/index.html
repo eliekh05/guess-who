@@ -23,28 +23,39 @@
           <label for="player-name">Your Name</label>
           <input type="text" id="player-name" placeholder="Enter your name" maxlength="20" autocomplete="off">
         </div>
-        <button id="btn-create" class="btn btn-primary">Create Room</button>
-        <div class="divider"><span>or</span></div>
-        <div class="input-group">
-          <label for="room-code">Room Code</label>
-          <input type="text" id="room-code" placeholder="6-letter code" maxlength="6" autocomplete="off" style="text-transform: uppercase;">
-        </div>
-        <button id="btn-join" class="btn btn-secondary">Join Room</button>
+        <button id="btn-create" class="btn btn-primary">Create Game</button>
       </div>
       <div id="landing-error" class="error-msg"></div>
     </div>
+
+    <!-- Join Screen (shown when opening /game/CODE link) -->
+    <div id="screen-join" class="screen">
+      <div class="logo">
+        <h1>Guess Who?</h1>
+        <p class="tagline">You've been invited to play!</p>
+      </div>
+      <div class="menu">
+        <div class="input-group">
+          <label for="join-name">Your Name</label>
+          <input type="text" id="join-name" placeholder="Enter your name" maxlength="20" autocomplete="off">
+        </div>
+        <button id="btn-join-game" class="btn btn-primary">Join Game</button>
+      </div>
+      <div id="join-error" class="error-msg"></div>
+    </div>
+
 
     <!-- Waiting Screen -->
     <div id="screen-waiting" class="screen">
       <div class="waiting-content">
         <div class="spinner"></div>
         <h2>Waiting for opponent...</h2>
-        <div class="room-code-display">
-          <span class="label">Room Code</span>
-          <span id="display-room-code" class="code">------</span>
-          <button id="btn-copy-code" class="btn-icon" title="Copy code">📋</button>
+        <p class="hint">Share this link with your friend</p>
+        <div class="share-link-box">
+          <input type="text" id="share-link" class="share-link-input" readonly>
+          <button id="btn-copy-link" class="btn-icon" title="Copy link">📋</button>
         </div>
-        <p class="hint">Share this code with your friend to join</p>
+        <div id="copy-toast" class="toast">Copied!</div>
       </div>
     </div>
 

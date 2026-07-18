@@ -10,6 +10,7 @@
 
   const screens = {
     landing: document.getElementById('screen-landing'),
+    join: document.getElementById('screen-join'),
     waiting: document.getElementById('screen-waiting'),
     select: document.getElementById('screen-select'),
     game: document.getElementById('screen-game'),
@@ -22,22 +23,25 @@
     currentScreen = name;
   }
 
-  function showError(msg) {
-    document.getElementById('landing-error').textContent = msg;
+  function showError(id, msg) {
+    document.getElementById(id).textContent = msg;
+  }
+
+  function showToast(msg) {
+    const toast = document.getElementById('copy-toast');
+    toast.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2000);
+  }
+
+  function getShareLink(code) {
+    return `${window.location.origin}/game/${code}`;
   }
 
   function getAvatar(char) {
     const gender = char.gender === 'female' ? '👩' : '👨';
     const skin = char.skinTone === 'dark' ? '🏿' : char.skinTone === 'medium' ? '🏽' : '🏻';
     return gender + skin;
-  }
-
-  function getHairColorHex(color) {
-    const map = {
-      black: '#1a1a1a', brown: '#8B4513', red: '#B22222',
-      blonde: '#DAA520', gray: '#808080', bald: 'transparent',
-    };
-    return map[color] || '#8B4513';
   }
 
   function renderCharacterCard(char, options = {}) {
@@ -106,11 +110,12 @@
     return res.json();
   }
 
+  // --- Create Game ---
   async function createGame() {
     const name = document.getElementById('player-name').value.trim();
-    if (!name) return showError('Please enter your name');
+    if (!name) return showError('landing-error', 'Please enter your name');
 
-    showError('');
+    showError('landing-error', '');
     document.getElementById('btn-create').disabled = true;
 
     try {
@@ -120,7 +125,7 @@
       });
 
       if (data.error) {
-        showError(data.error);
+        showError('landing-error', data.error);
         document.getElementById('btn-create').disabled = false;
         return;
       }
@@ -129,44 +134,55 @@
       roomCode = data.code;
       gameState = data.state;
 
-      document.getElementById('display-room-code').textContent = roomCode;
+      // Set share link and auto-copy
+      const link = getShareLink(roomCode);
+      document.getElementById('share-link').value = link;
+
       showScreen('waiting');
+
+      // Auto-copy link to clipboard
+      try {
+        await navigator.clipboard.writeText(link);
+        showToast('Link copied to clipboard!');
+      } catch {
+        // Clipboard API might fail (e.g. no HTTPS), user can tap copy button
+      }
+
       startPolling();
     } catch (err) {
-      showError('Failed to create game. Please try again.');
+      showError('landing-error', 'Failed to create game. Please try again.');
       document.getElementById('btn-create').disabled = false;
     }
   }
 
+  // --- Join Game via Link ---
   async function joinGame() {
-    const name = document.getElementById('player-name').value.trim();
-    const code = document.getElementById('room-code').value.trim().toUpperCase();
-    if (!name) return showError('Please enter your name');
-    if (!code || code.length !== 6) return showError('Please enter a 6-letter room code');
+    const name = document.getElementById('join-name').value.trim();
+    if (!name) return showError('join-error', 'Please enter your name');
+    if (!roomCode) return showError('join-error', 'Invalid game link');
 
-    showError('');
-    document.getElementById('btn-join').disabled = true;
+    showError('join-error', '');
+    document.getElementById('btn-join-game').disabled = true;
 
     try {
-      const data = await apiCall(`/api/game/${code}/join`, {
+      const data = await apiCall(`/api/game/${roomCode}/join`, {
         method: 'POST',
         body: JSON.stringify({ playerName: name }),
       });
 
       if (data.error) {
-        showError(data.error);
-        document.getElementById('btn-join').disabled = false;
+        showError('join-error', data.error);
+        document.getElementById('btn-join-game').disabled = false;
         return;
       }
 
       player = 'b';
-      roomCode = code;
       gameState = data.state;
 
       showCharacterSelect();
     } catch (err) {
-      showError('Failed to join game. Please check the code.');
-      document.getElementById('btn-join').disabled = false;
+      showError('join-error', 'Failed to join game. The game may have expired.');
+      document.getElementById('btn-join-game').disabled = false;
     }
   }
 
@@ -412,6 +428,7 @@
     showScreen('gameover');
   }
 
+  // --- Polling ---
   function startPolling() {
     stopPolling();
     pollInterval = setInterval(pollGameState, 2000);
@@ -448,12 +465,20 @@
     }
   }
 
+  // --- Event Listeners ---
   document.getElementById('btn-create').addEventListener('click', createGame);
-  document.getElementById('btn-join').addEventListener('click', joinGame);
+  document.getElementById('btn-join-game').addEventListener('click', joinGame);
   document.getElementById('btn-ask').addEventListener('click', askQuestion);
 
-  document.getElementById('btn-copy-code').addEventListener('click', () => {
-    navigator.clipboard.writeText(roomCode).catch(() => {});
+  document.getElementById('btn-copy-link').addEventListener('click', async () => {
+    const link = document.getElementById('share-link').value;
+    try {
+      await navigator.clipboard.writeText(link);
+      showToast('Link copied!');
+    } catch {
+      // Fallback: select the input text
+      document.getElementById('share-link').select();
+    }
   });
 
   document.getElementById('btn-play-again').addEventListener('click', () => {
@@ -462,26 +487,31 @@
     gameState = null;
     stopPolling();
     document.getElementById('player-name').value = '';
-    document.getElementById('room-code').value = '';
     document.getElementById('btn-create').disabled = false;
-    document.getElementById('btn-join').disabled = false;
     showScreen('landing');
+    // Clear URL back to root
+    window.history.replaceState({}, '', '/');
   });
 
-  document.querySelectorAll('input').forEach((input) => {
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        const id = input.id;
-        if (id === 'player-name' || id === 'room-code') {
-          if (document.getElementById('room-code').value.trim()) {
-            joinGame();
-          } else {
-            createGame();
-          }
-        }
-      }
-    });
+  // Enter key handlers
+  document.getElementById('player-name').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') createGame();
   });
+  document.getElementById('join-name').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') joinGame();
+  });
+
+  // --- Init: check for /game/CODE in URL ---
+  function init() {
+    const match = window.location.pathname.match(/^\/game\/([A-Z0-9]{6})$/);
+    if (match) {
+      roomCode = match[1];
+      showScreen('join');
+      document.getElementById('join-name').focus();
+    }
+  }
+
+  init();
 
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').catch(() => {});

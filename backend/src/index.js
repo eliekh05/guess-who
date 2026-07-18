@@ -19,11 +19,13 @@ export default {
       return addCors(Response.json({ status: 'ok', timestamp: Date.now() }));
     }
 
-    // Serve static assets via ASSETS binding, or return 404
+    // Static assets + SPA fallback.
+    // not_found_handling: "single-page-application" in wrangler.jsonc
+    // makes ASSETS serve index.html for unknown paths (e.g. /game/ABCDEF).
     if (env.ASSETS) {
       return env.ASSETS.fetch(request);
     }
-    return addCors(new Response('Not Found', { status: 404 }));
+    return new Response('Not Found', { status: 404 });
   },
 };
 
