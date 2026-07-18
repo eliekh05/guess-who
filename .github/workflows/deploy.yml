@@ -13,8 +13,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - name: Regenerate guides-data.js
-        run: node build.js
       - name: Deploy to Cloudflare Workers
         run: npx wrangler deploy
         env:
