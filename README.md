@@ -2,7 +2,7 @@
 
 The classic **Guess Who?** board game, reimagined as a web app. Challenge a friend to a game of deduction — ask yes/no questions about physical characteristics and eliminate characters until you can guess theirs.
 
-[**▶ Play Now**](YOUR_LINK_HERE)
+[**▶ Play Now**](https://guess-who.eliekh05.workers.dev)
 
 ---
 
