@@ -1,0 +1,21 @@
+{
+  "name": "guess-who-backend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "scrape": "node src/scrape/characters.js"
+  },
+  "dependencies": {
+    "cheerio": "^1.0.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240806.0",
+    "vitest": "^2.0.5",
+    "wrangler": "^3.72.0"
+  }
+}

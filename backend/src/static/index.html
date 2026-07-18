@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Guess Who?</title>
+  <meta name="description" content="The classic Guess Who? board game - play online with friends">
+  <meta name="theme-color" content="#1a1a2e">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤔</text></svg>">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Landing Screen -->
+    <div id="screen-landing" class="screen active">
+      <div class="logo">
+        <h1>Guess Who?</h1>
+        <p class="tagline">The Classic Deduction Game</p>
+      </div>
+      <div class="menu">
+        <div class="input-group">
+          <label for="player-name">Your Name</label>
+          <input type="text" id="player-name" placeholder="Enter your name" maxlength="20" autocomplete="off">
+        </div>
+        <button id="btn-create" class="btn btn-primary">Create Room</button>
+        <div class="divider"><span>or</span></div>
+        <div class="input-group">
+          <label for="room-code">Room Code</label>
+          <input type="text" id="room-code" placeholder="6-letter code" maxlength="6" autocomplete="off" style="text-transform: uppercase;">
+        </div>
+        <button id="btn-join" class="btn btn-secondary">Join Room</button>
+      </div>
+      <div id="landing-error" class="error-msg"></div>
+    </div>
+
+    <!-- Waiting Screen -->
+    <div id="screen-waiting" class="screen">
+      <div class="waiting-content">
+        <div class="spinner"></div>
+        <h2>Waiting for opponent...</h2>
+        <div class="room-code-display">
+          <span class="label">Room Code</span>
+          <span id="display-room-code" class="code">------</span>
+          <button id="btn-copy-code" class="btn-icon" title="Copy code">📋</button>
+        </div>
+        <p class="hint">Share this code with your friend to join</p>
+      </div>
+    </div>
+
+    <!-- Character Selection Screen -->
+    <div id="screen-select" class="screen">
+      <h2>Choose Your Character</h2>
+      <p class="subtitle">Pick someone to keep secret</p>
+      <div id="select-board" class="character-grid"></div>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="screen-game" class="screen">
+      <div class="game-header">
+        <div class="turn-info">
+          <span id="turn-label" class="turn-badge">Your Turn</span>
+          <span id="question-count" class="q-count">0 / 25</span>
+        </div>
+        <div id="game-status" class="status-bar"></div>
+      </div>
+
+      <div class="question-area">
+        <div id="question-history" class="history"></div>
+        <div class="ask-form">
+          <select id="question-select">
+            <option value="">Ask a question...</option>
+          </select>
+          <button id="btn-ask" class="btn btn-primary" disabled>Ask</button>
+        </div>
+      </div>
+
+      <div class="board-section">
+        <h3>Your Board</h3>
+        <div id="my-board" class="character-grid"></div>
+      </div>
+
+      <div id="guess-section" class="guess-section hidden">
+        <h3>Make Your Guess!</h3>
+        <p>You have 1 character remaining. Who is it?</p>
+        <div id="remaining-chars" class="remaining-list"></div>
+      </div>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="screen-gameover" class="screen">
+      <div id="gameover-content" class="gameover">
+        <div id="gameover-icon" class="gameover-icon"></div>
+        <h2 id="gameover-title"></h2>
+        <p id="gameover-message"></p>
+        <div id="gameover-reveal" class="reveal-card"></div>
+        <button id="btn-play-again" class="btn btn-primary">Play Again</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
