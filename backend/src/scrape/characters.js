@@ -1,5 +1,5 @@
 import * as cheerio from 'cheerio';
-import FALLBACK_CHARACTERS from '../config/characters.json' with { type: 'json' };
+import FALLBACK_CHARACTERS from '../config/characters.js';
 import { GAME_CONFIG } from '../config/game.js';
 
 const SOURCES = GAME_CONFIG.scrape.sources.map((s) => ({

@@ -1,4 +1,4 @@
-import QUESTION_CATEGORIES from '../config/questions.json' with { type: 'json' };
+import QUESTION_CATEGORIES from '../config/questions.js';
 import { GAME_CONFIG } from '../config/game.js';
 
 export { QUESTION_CATEGORIES };

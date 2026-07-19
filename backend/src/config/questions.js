@@ -1,0 +1,58 @@
+export default {
+  hairColor: {
+    label: 'Hair Color',
+    questions: [
+      { text: 'Does your character have red hair?', attribute: 'hairColor', value: 'red' },
+      { text: 'Does your character have blonde hair?', attribute: 'hairColor', value: 'blonde' },
+      { text: 'Does your character have black hair?', attribute: 'hairColor', value: 'black' },
+      { text: 'Does your character have brown hair?', attribute: 'hairColor', value: 'brown' },
+      { text: 'Does your character have gray hair?', attribute: 'hairColor', value: 'gray' },
+      { text: 'Is your character bald?', attribute: 'hairColor', value: 'bald' },
+    ],
+  },
+  eyeColor: {
+    label: 'Eye Color',
+    questions: [
+      { text: 'Does your character have blue eyes?', attribute: 'eyeColor', value: 'blue' },
+      { text: 'Does your character have green eyes?', attribute: 'eyeColor', value: 'green' },
+      { text: 'Does your character have brown eyes?', attribute: 'eyeColor', value: 'brown' },
+      { text: 'Does your character have hazel eyes?', attribute: 'eyeColor', value: 'hazel' },
+    ],
+  },
+  gender: {
+    label: 'Gender',
+    questions: [
+      { text: 'Is your character male?', attribute: 'gender', value: 'male' },
+      { text: 'Is your character female?', attribute: 'gender', value: 'female' },
+    ],
+  },
+  accessories: {
+    label: 'Accessories',
+    questions: [
+      { text: 'Does your character wear glasses?', attribute: 'glasses', value: true },
+      { text: 'Does your character wear a hat?', attribute: 'hat', value: true },
+    ],
+  },
+  hairLength: {
+    label: 'Hair Style',
+    questions: [
+      { text: 'Does your character have long hair?', attribute: 'hairLength', value: 'long' },
+      { text: 'Does your character have short hair?', attribute: 'hairLength', value: 'short' },
+      { text: 'Does your character have medium-length hair?', attribute: 'hairLength', value: 'medium' },
+    ],
+  },
+  facialHair: {
+    label: 'Facial Hair',
+    questions: [
+      { text: 'Does your character have facial hair?', attribute: 'facialHair', value: true },
+    ],
+  },
+  skinTone: {
+    label: 'Skin Tone',
+    questions: [
+      { text: 'Does your character have light skin?', attribute: 'skinTone', value: 'light' },
+      { text: 'Does your character have medium skin?', attribute: 'skinTone', value: 'medium' },
+      { text: 'Does your character have dark skin?', attribute: 'skinTone', value: 'dark' },
+    ],
+  },
+};
