@@ -1,14 +1,12 @@
 import { createGameState, selectCharacter, askQuestion, makeGuess } from './engine.js';
 import { getCharacters } from '../scrape/characters.js';
-
-const ROOM_CODE_LENGTH = 6;
-const SESSION_TTL = 3600;
+import { GAME_CONFIG } from '../config/game.js';
 
 function generateRoomCode() {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const { length, charset } = GAME_CONFIG.roomCode;
   let code = '';
-  for (let i = 0; i < ROOM_CODE_LENGTH; i++) {
-    code += chars[Math.floor(Math.random() * chars.length)];
+  for (let i = 0; i < length; i++) {
+    code += charset[Math.floor(Math.random() * charset.length)];
   }
   return code;
 }
@@ -21,13 +19,13 @@ export async function createSession(kv, playerAName) {
   state.players.a.board = characters.map((c) => ({ ...c, eliminated: false }));
   state.players.b.board = characters.map((c) => ({ ...c, eliminated: false }));
 
-  await kv.put(`game:${code}`, JSON.stringify(state), { expirationTtl: SESSION_TTL });
+  await kv.put(`${GAME_CONFIG.kvKeyPrefix}${code}`, JSON.stringify(state), { expirationTtl: GAME_CONFIG.sessionTTL });
 
   return { code, state };
 }
 
 export async function getSession(kv, code) {
-  const data = await kv.get(`game:${code}`, 'json');
+  const data = await kv.get(`${GAME_CONFIG.kvKeyPrefix}${code}`, 'json');
   return data;
 }
 
@@ -39,7 +37,7 @@ export async function joinSession(kv, code, playerBName) {
   state.players.b.name = playerBName;
   state.status = 'choosing';
 
-  await kv.put(`game:${code}`, JSON.stringify(state), { expirationTtl: SESSION_TTL });
+  await kv.put(`${GAME_CONFIG.kvKeyPrefix}${code}`, JSON.stringify(state), { expirationTtl: GAME_CONFIG.sessionTTL });
   return { state };
 }
 
@@ -50,7 +48,7 @@ export async function chooseCharacter(kv, code, player, characterName) {
   const result = selectCharacter(state, player, characterName);
   if (result.error) return result;
 
-  await kv.put(`game:${code}`, JSON.stringify(state), { expirationTtl: SESSION_TTL });
+  await kv.put(`${GAME_CONFIG.kvKeyPrefix}${code}`, JSON.stringify(state), { expirationTtl: GAME_CONFIG.sessionTTL });
   return { state };
 }
 
@@ -61,7 +59,7 @@ export async function submitQuestion(kv, code, player, questionText) {
   const result = askQuestion(state, player, questionText);
   if (result.error) return result;
 
-  await kv.put(`game:${code}`, JSON.stringify(state), { expirationTtl: SESSION_TTL });
+  await kv.put(`${GAME_CONFIG.kvKeyPrefix}${code}`, JSON.stringify(state), { expirationTtl: GAME_CONFIG.sessionTTL });
   return { state, ...result };
 }
 
@@ -72,6 +70,6 @@ export async function submitGuess(kv, code, player, characterName) {
   const result = makeGuess(state, player, characterName);
   if (result.error) return result;
 
-  await kv.put(`game:${code}`, JSON.stringify(state), { expirationTtl: SESSION_TTL });
+  await kv.put(`${GAME_CONFIG.kvKeyPrefix}${code}`, JSON.stringify(state), { expirationTtl: GAME_CONFIG.sessionTTL });
   return { state, ...result };
 }

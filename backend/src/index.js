@@ -1,5 +1,7 @@
 import { handleCharacters } from './api/characters.js';
 import { handleGame } from './api/game.js';
+import { QUESTION_CATEGORIES } from './game/questions.js';
+import { GAME_CONFIG } from './config/game.js';
 
 export default {
   async fetch(request, env, ctx) {
@@ -17,6 +19,16 @@ export default {
 
     if (url.pathname === '/api/health') {
       return addCors(Response.json({ status: 'ok', timestamp: Date.now() }));
+    }
+
+    if (url.pathname === '/api/questions') {
+      return addCors(Response.json(QUESTION_CATEGORIES));
+    }
+
+    if (url.pathname === '/api/config') {
+      return addCors(Response.json({
+        frontend: GAME_CONFIG.frontend,
+      }));
     }
 
     // Static assets + SPA fallback.

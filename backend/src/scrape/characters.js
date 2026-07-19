@@ -1,44 +1,11 @@
 import * as cheerio from 'cheerio';
+import FALLBACK_CHARACTERS from '../config/characters.json' with { type: 'json' };
+import { GAME_CONFIG } from '../config/game.js';
 
-const SOURCES = [
-  {
-    url: 'https://guesswho.fandom.com/wiki/Characters',
-    selector: '.article-content table',
-    parse: parseFandomTable,
-  },
-  {
-    url: 'https://guesswho.fandom.com/wiki/Classic_Characters',
-    selector: '.article-content table',
-    parse: parseFandomTable,
-  },
-];
-
-const FALLBACK_CHARACTERS = [
-  { name: 'Albert', hairColor: 'brown', eyeColor: 'black', gender: 'male', glasses: false, hat: false, hairLength: 'short', facialHair: false, skinTone: 'dark' },
-  { name: 'Bobby', hairColor: 'blonde', eyeColor: 'green', gender: 'male', glasses: true, hat: false, hairLength: 'medium', facialHair: false, skinTone: 'light' },
-  { name: 'Brooke', hairColor: 'red', eyeColor: 'blue', gender: 'male', glasses: false, hat: false, hairLength: 'long', facialHair: false, skinTone: 'light' },
-  { name: 'Clyde', hairColor: 'black', eyeColor: 'brown', gender: 'male', glasses: false, hat: false, hairLength: 'short', facialHair: true, skinTone: 'dark' },
-  { name: 'Elliott', hairColor: 'bald', eyeColor: 'green', gender: 'male', glasses: true, hat: false, hairLength: 'bald', facialHair: false, skinTone: 'light' },
-  { name: 'Garrett', hairColor: 'red', eyeColor: 'blue', gender: 'male', glasses: false, hat: false, hairLength: 'long', facialHair: false, skinTone: 'light' },
-  { name: 'Henry', hairColor: 'blonde', eyeColor: 'blue', gender: 'male', glasses: false, hat: false, hairLength: 'short', facialHair: false, skinTone: 'light' },
-  { name: 'Jesse', hairColor: 'black', eyeColor: 'brown', gender: 'male', glasses: false, hat: false, hairLength: 'short', facialHair: false, skinTone: 'dark' },
-  { name: 'Ada', hairColor: 'red', eyeColor: 'blue', gender: 'female', glasses: false, hat: false, hairLength: 'long', facialHair: false, skinTone: 'light' },
-  { name: 'Alice', hairColor: 'black', eyeColor: 'blue', gender: 'female', glasses: false, hat: false, hairLength: 'long', facialHair: false, skinTone: 'light' },
-  { name: 'Brigitte', hairColor: 'blonde', eyeColor: 'blue', gender: 'female', glasses: false, hat: false, hairLength: 'long', facialHair: false, skinTone: 'light' },
-  { name: 'Cheryl', hairColor: 'red', eyeColor: 'blue', gender: 'female', glasses: false, hat: false, hairLength: 'short', facialHair: false, skinTone: 'light' },
-  { name: 'Daphne', hairColor: 'blonde', eyeColor: 'blue', gender: 'female', glasses: false, hat: false, hairLength: 'long', facialHair: false, skinTone: 'light' },
-  { name: 'Ellen', hairColor: 'black', eyeColor: 'blue', gender: 'female', glasses: false, hat: false, hairLength: 'long', facialHair: false, skinTone: 'light' },
-  { name: 'Fran', hairColor: 'bald', eyeColor: 'blue', gender: 'female', glasses: false, hat: false, hairLength: 'bald', facialHair: false, skinTone: 'light' },
-  { name: 'Greta', hairColor: 'blonde', eyeColor: 'blue', gender: 'female', glasses: true, hat: false, hairLength: 'medium', facialHair: false, skinTone: 'light' },
-  { name: 'Ian', hairColor: 'bald', eyeColor: 'blue', gender: 'male', glasses: false, hat: false, hairLength: 'bald', facialHair: false, skinTone: 'light' },
-  { name: 'Jack', hairColor: 'black', eyeColor: 'blue', gender: 'male', glasses: true, hat: false, hairLength: 'short', facialHair: false, skinTone: 'light' },
-  { name: 'Larry', hairColor: 'blonde', eyeColor: 'blue', gender: 'male', glasses: false, hat: false, hairLength: 'long', facialHair: false, skinTone: 'light' },
-  { name: 'Mort', hairColor: 'bald', eyeColor: 'blue', gender: 'male', glasses: false, hat: false, hairLength: 'bald', facialHair: false, skinTone: 'light' },
-  { name: 'Peter', hairColor: 'red', eyeColor: 'blue', gender: 'male', glasses: false, hat: false, hairLength: 'long', facialHair: false, skinTone: 'light' },
-  { name: 'Sam', hairColor: 'black', eyeColor: 'blue', gender: 'male', glasses: false, hat: false, hairLength: 'short', facialHair: false, skinTone: 'light' },
-  { name: 'Victor', hairColor: 'black', eyeColor: 'blue', gender: 'male', glasses: true, hat: false, hairLength: 'short', facialHair: false, skinTone: 'light' },
-  { name: 'Wendy', hairColor: 'blonde', eyeColor: 'blue', gender: 'female', glasses: false, hat: false, hairLength: 'long', facialHair: false, skinTone: 'light' },
-];
+const SOURCES = GAME_CONFIG.scrape.sources.map((s) => ({
+  ...s,
+  parse: parseFandomTable,
+}));
 
 function parseFandomTable(html) {
   const $ = cheerio.load(html);
@@ -124,7 +91,7 @@ export async function scrapeCharacters() {
     try {
       const response = await fetch(source.url, {
         headers: {
-          'User-Agent': 'GuessWhoScraper/1.0 (Educational Project)',
+          'User-Agent': GAME_CONFIG.scrape.userAgent,
           'Accept': 'text/html,application/xhtml+xml',
         },
       });
@@ -138,7 +105,7 @@ export async function scrapeCharacters() {
       if (!tableHtml) continue;
 
       const characters = source.parse(`<table>${tableHtml}</table>`);
-      if (characters && characters.length >= 20) {
+      if (characters && characters.length >= GAME_CONFIG.scrape.minCharacters) {
         return characters;
       }
     } catch (err) {
@@ -152,12 +119,11 @@ export async function scrapeCharacters() {
 }
 
 export async function getCharacters(kv) {
-  const cacheKey = 'characters:v1';
-  const cached = await kv.get(cacheKey, 'json');
+  const cached = await kv.get(GAME_CONFIG.cache.key, 'json');
   if (cached) return cached;
 
   const characters = await scrapeCharacters();
-  await kv.put(cacheKey, JSON.stringify(characters), { expirationTtl: 86400 });
+  await kv.put(GAME_CONFIG.cache.key, JSON.stringify(characters), { expirationTtl: GAME_CONFIG.cache.ttl });
   return characters;
 }
 

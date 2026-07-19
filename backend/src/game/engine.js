@@ -1,4 +1,5 @@
 import { matchQuestionToAttribute } from './questions.js';
+import { GAME_CONFIG } from '../config/game.js';
 
 export function createGameState(playerAName, playerBName) {
   return {
@@ -19,7 +20,7 @@ export function createGameState(playerAName, playerBName) {
     },
     currentTurn: 'a',
     questionCount: 0,
-    maxQuestions: 25,
+    maxQuestions: GAME_CONFIG.maxQuestions,
     history: [],
     winner: null,
     createdAt: Date.now(),

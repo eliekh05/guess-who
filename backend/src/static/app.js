@@ -7,6 +7,7 @@
   let roomCode = null;
   let gameState = null;
   let pollInterval = null;
+  let appConfig = null;
 
   const screens = {
     landing: document.getElementById('screen-landing'),
@@ -72,7 +73,7 @@
       if (char.glasses) {
         const dot = document.createElement('span');
         dot.className = 'attr-dot';
-        dot.style.background = '#4fc3f7';
+        dot.style.background = appConfig?.attributeColors?.glasses || '#4fc3f7';
         dot.title = 'Glasses';
         attrs.appendChild(dot);
       }
@@ -80,7 +81,7 @@
       if (char.hat) {
         const dot = document.createElement('span');
         dot.className = 'attr-dot';
-        dot.style.background = '#8d6e63';
+        dot.style.background = appConfig?.attributeColors?.hat || '#8d6e63';
         dot.title = 'Hat';
         attrs.appendChild(dot);
       }
@@ -88,7 +89,7 @@
       if (char.facialHair) {
         const dot = document.createElement('span');
         dot.className = 'attr-dot';
-        dot.style.background = '#5d4037';
+        dot.style.background = appConfig?.attributeColors?.facialHair || '#5d4037';
         dot.title = 'Facial Hair';
         attrs.appendChild(dot);
       }
@@ -220,10 +221,10 @@
     }
   }
 
-  function startGame() {
+  async function startGame() {
     stopPolling();
     renderGameBoard();
-    populateQuestions();
+    await populateQuestions();
     updateTurnDisplay();
     showScreen('game');
   }
@@ -243,52 +244,27 @@
     updateGuessSection();
   }
 
-  function populateQuestions() {
+  async function populateQuestions() {
     const select = document.getElementById('question-select');
     select.innerHTML = '<option value="">Ask a question...</option>';
 
-    const categories = [
-      { label: 'Hair Color', questions: [
-        'Does your character have red hair?',
-        'Does your character have blonde hair?',
-        'Does your character have black hair?',
-        'Does your character have brown hair?',
-        'Is your character bald?',
-      ]},
-      { label: 'Eye Color', questions: [
-        'Does your character have blue eyes?',
-        'Does your character have green eyes?',
-        'Does your character have brown eyes?',
-      ]},
-      { label: 'Gender', questions: [
-        'Is your character male?',
-        'Is your character female?',
-      ]},
-      { label: 'Accessories', questions: [
-        'Does your character wear glasses?',
-        'Does your character wear a hat?',
-      ]},
-      { label: 'Hair Style', questions: [
-        'Does your character have long hair?',
-        'Does your character have short hair?',
-      ]},
-      { label: 'Other', questions: [
-        'Does your character have facial hair?',
-        'Does your character have dark skin?',
-      ]},
-    ];
+    try {
+      const categories = await apiCall('/api/questions');
 
-    categories.forEach((cat) => {
-      const group = document.createElement('optgroup');
-      group.label = cat.label;
-      cat.questions.forEach((q) => {
-        const opt = document.createElement('option');
-        opt.value = q;
-        opt.textContent = q;
-        group.appendChild(opt);
+      Object.values(categories).forEach((cat) => {
+        const group = document.createElement('optgroup');
+        group.label = cat.label;
+        cat.questions.forEach((q) => {
+          const opt = document.createElement('option');
+          opt.value = q.text;
+          opt.textContent = q.text;
+          group.appendChild(opt);
+        });
+        select.appendChild(group);
       });
-      select.appendChild(group);
-    });
+    } catch {
+      select.innerHTML = '<option value="">Failed to load questions</option>';
+    }
   }
 
   function updateTurnDisplay() {
@@ -315,7 +291,7 @@
     const history = document.getElementById('question-history');
     history.innerHTML = '';
 
-    const recentHistory = gameState.history.slice(-10).reverse();
+    const recentHistory = gameState.history.slice(-(appConfig?.historyDisplayLimit || 10)).reverse();
     recentHistory.forEach((entry) => {
       const item = document.createElement('div');
       item.className = 'history-item';
@@ -431,7 +407,7 @@
   // --- Polling ---
   function startPolling() {
     stopPolling();
-    pollInterval = setInterval(pollGameState, 2000);
+    pollInterval = setInterval(pollGameState, appConfig?.pollingIntervalMs || 2000);
   }
 
   function stopPolling() {
@@ -505,7 +481,16 @@
   });
 
   // --- Init: check for /game/CODE in URL ---
-  function init() {
+  async function init() {
+    try {
+      const configRes = await apiCall('/api/config');
+      if (configRes?.frontend) {
+        appConfig = configRes.frontend;
+      }
+    } catch {
+      // Config fetch failed — defaults will be used
+    }
+
     const match = window.location.pathname.match(/^\/game\/([A-Z0-9]{6})$/);
     if (match) {
       roomCode = match[1];
