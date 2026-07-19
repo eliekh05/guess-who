@@ -39,10 +39,96 @@
     return `${window.location.origin}/game/${code}`;
   }
 
-  function getAvatar(char) {
-    const gender = char.gender === 'female' ? '👩' : '👨';
-    const skin = char.skinTone === 'dark' ? '🏿' : char.skinTone === 'medium' ? '🏽' : '🏻';
-    return gender + skin;
+  // Skin tone color map
+  const SKIN_COLORS = {
+    light: '#f5d0a9',
+    medium: '#c68642',
+    dark: '#8d5524',
+  };
+
+  // Hair color map
+  const HAIR_COLORS = {
+    black: '#1a1a1a',
+    brown: '#6b3a2a',
+    blonde: '#e8c872',
+    red: '#b5451b',
+    gray: '#9e9e9e',
+    bald: 'transparent',
+  };
+
+  // Eye color map
+  const EYE_COLORS = {
+    blue: '#4a90d9',
+    brown: '#5c3317',
+    green: '#4a9e4a',
+  };
+
+  function renderCharacterPortrait(char) {
+    const face = document.createElement('div');
+    face.className = 'face-portrait';
+    face.style.setProperty('--skin', SKIN_COLORS[char.skinTone] || SKIN_COLORS.light);
+    face.style.setProperty('--hair', HAIR_COLORS[char.hairColor] || HAIR_COLORS.brown);
+    face.style.setProperty('--eyes', EYE_COLORS[char.eyeColor] || EYE_COLORS.blue);
+
+    // Hat (rendered first, above head)
+    if (char.hat) {
+      const hat = document.createElement('div');
+      hat.className = 'face-hat';
+      face.appendChild(hat);
+    }
+
+    // Hair
+    if (char.hairColor !== 'bald') {
+      const hair = document.createElement('div');
+      hair.className = 'face-hair face-hair--' + char.hairLength;
+      face.appendChild(hair);
+    }
+
+    // Head/face shape
+    const head = document.createElement('div');
+    head.className = 'face-head';
+
+    // Eyes
+    const eyes = document.createElement('div');
+    eyes.className = 'face-eyes';
+    const leftEye = document.createElement('div');
+    leftEye.className = 'face-eye';
+    const rightEye = document.createElement('div');
+    rightEye.className = 'face-eye';
+    eyes.appendChild(leftEye);
+    eyes.appendChild(rightEye);
+    head.appendChild(eyes);
+
+    // Glasses
+    if (char.glasses) {
+      const glasses = document.createElement('div');
+      glasses.className = 'face-glasses';
+      head.appendChild(glasses);
+    }
+
+    // Nose
+    const nose = document.createElement('div');
+    nose.className = 'face-nose';
+    head.appendChild(nose);
+
+    // Mouth
+    const mouth = document.createElement('div');
+    mouth.className = 'face-mouth';
+    head.appendChild(mouth);
+
+    // Facial hair
+    if (char.facialHair === 'mustache') {
+      const stache = document.createElement('div');
+      stache.className = 'face-mustache';
+      head.appendChild(stache);
+    } else if (char.facialHair === 'beard') {
+      const beard = document.createElement('div');
+      beard.className = 'face-beard';
+      head.appendChild(beard);
+    }
+
+    face.appendChild(head);
+    return face;
   }
 
   function renderCharacterCard(char, options = {}) {
@@ -55,15 +141,13 @@
       card.addEventListener('click', () => selectCharacter(char.name));
     }
 
-    const avatar = document.createElement('div');
-    avatar.className = 'char-avatar';
-    avatar.textContent = getAvatar(char);
+    const portrait = renderCharacterPortrait(char);
 
     const name = document.createElement('div');
     name.className = 'char-name';
     name.textContent = char.name;
 
-    card.appendChild(avatar);
+    card.appendChild(portrait);
     card.appendChild(name);
 
     if (showBoard) {
@@ -86,11 +170,11 @@
         attrs.appendChild(dot);
       }
 
-      if (char.facialHair) {
+      if (char.facialHair && char.facialHair !== 'none') {
         const dot = document.createElement('span');
         dot.className = 'attr-dot';
         dot.style.background = appConfig?.attributeColors?.facialHair || '#5d4037';
-        dot.title = 'Facial Hair';
+        dot.title = char.facialHair === 'beard' ? 'Beard' : 'Mustache';
         attrs.appendChild(dot);
       }
 
@@ -395,10 +479,8 @@
     );
 
     if (oppChar) {
-      reveal.innerHTML = `
-        Their character was: <strong>${oppChar.name}</strong>
-        <div style="margin-top:0.5rem;font-size:2rem">${getAvatar(oppChar)}</div>
-      `;
+      reveal.innerHTML = `Their character was: <strong>${oppChar.name}</strong>`;
+      reveal.appendChild(renderCharacterPortrait(oppChar));
     }
 
     showScreen('gameover');

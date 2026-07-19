@@ -2,11 +2,11 @@ import { describe, it, expect } from 'vitest';
 import { createGameState, selectCharacter, askQuestion, makeGuess } from './engine.js';
 
 const SAMPLE_BOARD = [
-  { name: 'Alice', hairColor: 'black', eyeColor: 'blue', gender: 'female', glasses: false, hat: false, hairLength: 'long', facialHair: false, skinTone: 'light' },
-  { name: 'Bob', hairColor: 'blonde', eyeColor: 'green', gender: 'male', glasses: true, hat: false, hairLength: 'short', facialHair: false, skinTone: 'light' },
-  { name: 'Charlie', hairColor: 'red', eyeColor: 'brown', gender: 'male', glasses: false, hat: true, hairLength: 'medium', facialHair: true, skinTone: 'dark' },
-  { name: 'Diana', hairColor: 'brown', eyeColor: 'blue', gender: 'female', glasses: false, hat: false, hairLength: 'long', facialHair: false, skinTone: 'medium' },
-  { name: 'Eve', hairColor: 'blonde', eyeColor: 'blue', gender: 'female', glasses: true, hat: false, hairLength: 'short', facialHair: false, skinTone: 'light' },
+  { name: 'Alice', hairColor: 'black', eyeColor: 'blue', gender: 'female', glasses: false, hat: false, hairLength: 'long', facialHair: 'none', skinTone: 'light' },
+  { name: 'Bob', hairColor: 'blonde', eyeColor: 'green', gender: 'male', glasses: true, hat: false, hairLength: 'short', facialHair: 'none', skinTone: 'light' },
+  { name: 'Charlie', hairColor: 'red', eyeColor: 'brown', gender: 'male', glasses: false, hat: true, hairLength: 'medium', facialHair: 'beard', skinTone: 'dark' },
+  { name: 'Diana', hairColor: 'brown', eyeColor: 'blue', gender: 'female', glasses: false, hat: false, hairLength: 'long', facialHair: 'none', skinTone: 'medium' },
+  { name: 'Eve', hairColor: 'blonde', eyeColor: 'blue', gender: 'female', glasses: true, hat: false, hairLength: 'short', facialHair: 'none', skinTone: 'light' },
 ];
 
 describe('Game Engine', () => {

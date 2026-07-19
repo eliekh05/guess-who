@@ -333,6 +333,184 @@ body {
   font-size: 1.8rem;
 }
 
+/* === CSS Character Portraits === */
+.face-portrait {
+  width: 56px;
+  height: 64px;
+  margin: 0 auto 0.3rem;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.face-head {
+  width: 40px;
+  height: 44px;
+  background: var(--skin);
+  border-radius: 50% 50% 45% 45%;
+  position: relative;
+  z-index: 2;
+  overflow: visible;
+}
+
+/* Hair styles */
+.face-hair {
+  position: absolute;
+  z-index: 3;
+  background: var(--hair);
+  border-radius: 50%;
+}
+
+.face-hair--short {
+  width: 42px;
+  height: 22px;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 50% 50% 30% 30%;
+}
+
+.face-hair--medium {
+  width: 44px;
+  height: 26px;
+  top: -1px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 50% 50% 30% 30%;
+}
+
+.face-hair--long {
+  width: 48px;
+  height: 40px;
+  top: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 50% 50% 40% 40%;
+}
+
+/* Eyes */
+.face-eyes {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 4;
+}
+
+.face-eye {
+  width: 6px;
+  height: 6px;
+  background: var(--eyes);
+  border-radius: 50%;
+  border: 1px solid rgba(0,0,0,0.2);
+}
+
+/* Glasses */
+.face-glasses {
+  position: absolute;
+  top: 13px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 30px;
+  height: 12px;
+  z-index: 5;
+  border: 2px solid #333;
+  border-radius: 50%;
+  background: transparent;
+}
+
+.face-glasses::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 4px;
+  height: 2px;
+  background: #333;
+}
+
+/* Nose */
+.face-nose {
+  position: absolute;
+  top: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 5px;
+  background: rgba(0,0,0,0.1);
+  border-radius: 50%;
+  z-index: 4;
+}
+
+/* Mouth */
+.face-mouth {
+  position: absolute;
+  top: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 10px;
+  height: 4px;
+  border-bottom: 2px solid rgba(0,0,0,0.25);
+  border-radius: 0 0 50% 50%;
+  z-index: 4;
+}
+
+/* Mustache */
+.face-mustache {
+  position: absolute;
+  top: 27px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 16px;
+  height: 5px;
+  background: var(--hair);
+  border-radius: 0 0 50% 50%;
+  z-index: 5;
+}
+
+/* Beard */
+.face-beard {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 30px;
+  height: 14px;
+  background: var(--hair);
+  border-radius: 0 0 50% 50%;
+  z-index: 1;
+  opacity: 0.85;
+}
+
+/* Hat */
+.face-hat {
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 50px;
+  height: 16px;
+  background: #c0392b;
+  border-radius: 6px 6px 0 0;
+  z-index: 10;
+}
+
+.face-hat::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: -4px;
+  width: 58px;
+  height: 4px;
+  background: #a93226;
+  border-radius: 2px;
+}
+
 .char-name {
   font-size: 0.75rem;
   font-weight: 600;
@@ -565,6 +743,7 @@ body {
   .logo h1 { font-size: 2.2rem; }
   .character-grid { grid-template-columns: repeat(auto-fill, minmax(75px, 1fr)); }
   .char-avatar { width: 40px; height: 40px; font-size: 1.4rem; }
+  .face-portrait { transform: scale(0.85); transform-origin: top center; }
   .game-header { flex-direction: column; gap: 0.5rem; }
   .ask-form { flex-direction: column; }
 }

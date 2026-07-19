@@ -43,9 +43,15 @@ function inferAttributes(raw) {
     glasses: allText.includes('glass'),
     hat: allText.includes('hat'),
     hairLength: extractHairLength(allText),
-    facialHair: allText.includes('mustache') || allText.includes('beard') || allText.includes('facial'),
+    facialHair: extractFacialHair(allText),
     skinTone: extractSkinTone(allText),
   };
+}
+
+function extractFacialHair(text) {
+  if (text.includes('beard')) return 'beard';
+  if (text.includes('mustache') || text.includes('moustache')) return 'mustache';
+  return 'none';
 }
 
 function extractHairColor(text) {
