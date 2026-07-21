@@ -35,7 +35,7 @@ export function selectCharacter(state, player, characterName) {
   state.players[player].character = characterName;
   state.players[player].board = state.players[player].board.map((c) => ({
     ...c,
-    eliminated: c.name === characterName ? false : false,
+    eliminated: false,
   }));
 
   if (state.players.a.character && state.players.b.character) {

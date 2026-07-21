@@ -10,9 +10,6 @@
     "test:watch": "vitest",
     "scrape": "node src/scrape/characters.js"
   },
-  "dependencies": {
-    "cheerio": "^1.0.0"
-  },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20240806.0",
     "vitest": "^2.0.5",

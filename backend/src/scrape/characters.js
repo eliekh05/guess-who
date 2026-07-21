@@ -1,140 +1,164 @@
-import * as cheerio from 'cheerio';
 import FALLBACK_CHARACTERS from '../config/characters.js';
 import { GAME_CONFIG } from '../config/game.js';
 
-const SOURCES = GAME_CONFIG.scrape.sources.map((s) => ({
-  ...s,
-  parse: parseFandomTable,
-}));
-
-function parseFandomTable(html) {
-  const $ = cheerio.load(html);
-  const characters = [];
-
-  $('table tr').each((_, row) => {
-    const cells = $(row).find('td');
-    if (cells.length < 2) return;
-
-    const name = $(cells[0]).text().trim();
-    if (!name || name.toLowerCase() === 'name') return;
-
-    const attrs = {};
-    cells.each((i, cell) => {
-      const text = $(cell).text().trim().toLowerCase();
-      if (i === 0) return;
-      attrs[`col${i}`] = text;
-    });
-
-    characters.push({
-      name,
-      ...inferAttributes(attrs),
-    });
-  });
-
-  return characters.length > 0 ? characters : null;
-}
-
-function inferAttributes(raw) {
-  const allText = Object.values(raw).join(' ').toLowerCase();
-  return {
-    hairColor: extractHairColor(allText),
-    eyeColor: extractEyeColor(allText),
-    gender: extractGender(allText),
-    glasses: allText.includes('glass'),
-    hat: allText.includes('hat'),
-    hairLength: extractHairLength(allText),
-    facialHair: extractFacialHair(allText),
-    skinTone: extractSkinTone(allText),
-  };
-}
-
-function extractFacialHair(text) {
-  if (text.includes('beard')) return 'beard';
-  if (text.includes('mustache') || text.includes('moustache')) return 'mustache';
-  return 'none';
-}
-
-function extractHairColor(text) {
-  if (text.includes('red') || text.includes('ginger')) return 'red';
-  if (text.includes('blonde') || text.includes('blond')) return 'blonde';
-  if (text.includes('black')) return 'black';
-  if (text.includes('brown')) return 'brown';
-  if (text.includes('gray') || text.includes('grey') || text.includes('white')) return 'gray';
-  if (text.includes('bald') || text.includes('no hair')) return 'bald';
-  return 'brown';
-}
-
-function extractEyeColor(text) {
-  if (text.includes('blue')) return 'blue';
-  if (text.includes('green')) return 'green';
-  if (text.includes('brown')) return 'brown';
-  if (text.includes('hazel')) return 'hazel';
-  if (text.includes('black')) return 'black';
-  return 'blue';
-}
-
-function extractGender(text) {
-  if (text.includes('female') || text.includes('woman') || text.includes('girl')) return 'female';
-  return 'male';
-}
-
-function extractHairLength(text) {
-  if (text.includes('bald') || text.includes('no hair')) return 'bald';
-  if (text.includes('long')) return 'long';
-  if (text.includes('short')) return 'short';
-  if (text.includes('medium')) return 'medium';
-  return 'medium';
-}
-
-function extractSkinTone(text) {
-  if (text.includes('dark') || text.includes('black')) return 'dark';
-  if (text.includes('medium') || text.includes('tan') || text.includes('olive')) return 'medium';
-  return 'light';
-}
-
-export async function scrapeCharacters() {
-  for (const source of SOURCES) {
-    try {
-      const response = await fetch(source.url, {
-        headers: {
-          'User-Agent': GAME_CONFIG.scrape.userAgent,
-          'Accept': 'text/html,application/xhtml+xml',
-        },
-      });
-
-      if (!response.ok) continue;
-
-      const html = await response.text();
-      const $ = cheerio.load(html);
-
-      const tableHtml = $(source.selector).html();
-      if (!tableHtml) continue;
-
-      const characters = source.parse(`<table>${tableHtml}</table>`);
-      if (characters && characters.length >= GAME_CONFIG.scrape.minCharacters) {
-        return characters;
-      }
-    } catch (err) {
-      console.warn(`Failed to scrape from ${source.url}:`, err.message);
-      continue;
-    }
-  }
-
-  console.warn('All scrape sources failed, using fallback character data');
-  return FALLBACK_CHARACTERS;
-}
+const WIKI_API = 'https://en.wikipedia.org/w/api.php';
+const WIKI_PAGE = 'Guess_Who?';
+const WIKI_SECTION = 8; // Characters section
 
 export async function getCharacters(kv) {
-  const cached = await kv.get(GAME_CONFIG.cache.key, 'json');
-  if (cached) return cached;
+  if (kv) {
+    const cached = await kv.get(GAME_CONFIG.cache.key, 'json');
+    if (cached) return cached;
+  }
 
-  const characters = await scrapeCharacters();
-  await kv.put(GAME_CONFIG.cache.key, JSON.stringify(characters), { expirationTtl: GAME_CONFIG.cache.ttl });
+  let characters;
+  try {
+    characters = await scrapeCharacters();
+  } catch (err) {
+    console.warn('Wikipedia scrape failed, using fallback:', err.message);
+    characters = FALLBACK_CHARACTERS;
+  }
+
+  if (kv) {
+    await kv.put(GAME_CONFIG.cache.key, JSON.stringify(characters), {
+      expirationTtl: GAME_CONFIG.cache.ttl,
+    });
+  }
+
   return characters;
 }
 
+async function scrapeCharacters() {
+  const url = `${WIKI_API}?action=parse&page=${encodeURIComponent(WIKI_PAGE)}&format=json&prop=wikitext&section=${WIKI_SECTION}`;
+
+  const res = await fetch(url, {
+    headers: { 'User-Agent': 'GuessWhoScraper/1.0 (Educational Project)' },
+  });
+
+  if (!res.ok) throw new Error(`Wikipedia API returned ${res.status}`);
+
+  const data = await res.json();
+  if (!data.parse?.wikitext?.['*']) throw new Error('No wikitext in response');
+
+  const allChars = parseWikiTable(data.parse.wikitext['*']);
+
+  if (allChars.length < GAME_CONFIG.scrape.minCharacters) {
+    throw new Error(`Only found ${allChars.length} characters, need ${GAME_CONFIG.scrape.minCharacters}`);
+  }
+
+  // Select 24 characters with best attribute diversity
+  return selectBalancedSubset(allChars, 24);
+}
+
+function parseWikiTable(wikitext) {
+  const characters = [];
+
+  for (const row of wikitext.split('|-').slice(1)) {
+    const cells = row.split('||').map((c) => c.trim());
+
+    if (cells.length < 11) continue;
+
+    const name = cells[0].replace(/^\|\s*/, '').trim().split(',')[0].trim();
+    if (!name || name.startsWith('{') || name === 'Name') continue;
+
+    const gender = cells[2].trim().toLowerCase();
+    const eyes = extractAfterPipe(cells[3]).toLowerCase();
+    const hair = extractAfterPipe(cells[4]).toLowerCase();
+    const beard = cells[5].includes('yes');
+    const mustache = cells[6].includes('yes');
+    const glasses = cells[8].includes('yes');
+    const hat = cells[9].includes('yes');
+
+    characters.push({
+      name,
+      hairColor: mapHairColor(hair),
+      eyeColor: mapEyeColor(eyes),
+      gender,
+      glasses,
+      hat,
+      hairLength: inferHairLength(name),
+      facialHair: beard ? 'beard' : mustache ? 'mustache' : 'none',
+      skinTone: 'light', // Not available from Wikipedia
+    });
+  }
+
+  return characters;
+}
+
+function extractAfterPipe(cell) {
+  const match = cell.match(/\|([A-Za-z ]+?)$/);
+  return match ? match[1].trim() : cell.replace(/[{}]|style="[^"]*"/g, '').trim();
+}
+
+function mapHairColor(raw) {
+  const map = {
+    black: 'black', brown: 'brown', 'light brown': 'brown',
+    'dark brown': 'brown', blonde: 'blonde', red: 'red',
+    white: 'gray', highlights: 'brown', gray: 'gray', grey: 'gray',
+  };
+  return map[raw] || 'brown';
+}
+
+function mapEyeColor(raw) {
+  const map = { blue: 'blue', brown: 'brown', green: 'green', hazel: 'hazel' };
+  return map[raw] || 'brown';
+}
+
+// Wikipedia doesn't have hair length — infer from the character's classic look
+function inferHairLength(name) {
+  const short = ['Al', 'Alex', 'Ben', 'Bernard', 'Bill', 'Charles', 'Daniel', 'David',
+    'Eric', 'Frans', 'Gabe', 'George', 'Herman', 'Joe', 'Jordan', 'Leo', 'Max',
+    'Mike', 'Nick', 'Paul', 'Peter', 'Philip', 'Richard', 'Robert', 'Sam', 'Tom', 'Victor'];
+  const long = ['Amy', 'Anita', 'Betty', 'Carmen', 'Claire', 'Emma', 'Farah',
+    'Holly', 'Katie', 'Laura', 'Lily', 'Liz', 'Maria', 'Mia', 'Olivia',
+    'Rachel', 'Sally', 'Sofia', 'Susan'];
+  if (short.includes(name)) return 'short';
+  if (long.includes(name)) return 'long';
+  return 'medium';
+}
+
+// Select N characters ensuring attribute diversity
+function selectBalancedSubset(all, count) {
+  const selected = [];
+  const seenHair = new Set();
+  const seenEyes = new Set();
+  const seenGender = new Set();
+
+  // First pass: ensure we have all attribute values represented
+  for (const char of all) {
+    if (selected.length >= count) break;
+    const novelty = [
+      !seenHair.has(char.hairColor),
+      !seenEyes.has(char.eyeColor),
+      !seenGender.has(char.gender),
+    ].filter(Boolean).length;
+
+    if (novelty > 0) {
+      selected.push(char);
+      seenHair.add(char.hairColor);
+      seenEyes.add(char.eyeColor);
+      seenGender.add(char.gender);
+    }
+  }
+
+  // Second pass: fill remaining slots
+  for (const char of all) {
+    if (selected.length >= count) break;
+    if (!selected.includes(char)) {
+      selected.push(char);
+    }
+  }
+
+  return selected.slice(0, count);
+}
+
+// CLI: node src/scrape/characters.js
 if (process.argv[1]?.endsWith('characters.js')) {
   scrapeCharacters().then((chars) => {
     console.log(JSON.stringify(chars, null, 2));
+  }).catch((err) => {
+    console.error('Scrape failed:', err.message);
+    console.log('Using fallback characters');
+    console.log(JSON.stringify(FALLBACK_CHARACTERS, null, 2));
   });
 }

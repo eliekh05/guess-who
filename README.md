@@ -53,15 +53,15 @@ The game features **24 unique characters** with varied attributes:
 | Facial Hair | Yes / No |
 | Skin Tone | Light, Medium, Dark |
 
-Character data is scraped from online sources at startup — nothing is hardcoded.
+Character data is scraped from Wikipedia at startup, with hardcoded fallback characters if the API is unavailable.
 
 ---
 
 ## Tech Stack
 
 - **Runtime**: Cloudflare Workers
-- **Scraping**: cheerio (no Playwright/Puppeteer)
-- **Storage**: Cloudflare KV (game sessions)
+- **Scraping**: Wikipedia MediaWiki API
+- **Storage**: Cloudflare KV (game sessions + character cache)
 - **PWA**: Service Worker + Web App Manifest
 - **CI/CD**: GitHub Actions → `wrangler deploy`
 
@@ -78,7 +78,7 @@ guess-who/
 │   │   ├── game/          # Game engine & logic
 │   │   ├── scrape/        # Character scraper
 │   │   └── static/        # Frontend assets
-│   └── wrangler.toml
+│   └── wrangler.jsonc
 ├── frontend/              # Emergency fallback
 └── .github/workflows/     # CI/CD
 ```

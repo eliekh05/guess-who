@@ -6,14 +6,22 @@ import {
   submitGuess,
   getSession,
 } from '../game/session.js';
-import { getCharacters } from '../scrape/characters.js';
+
+async function readBody(request) {
+  try {
+    return await request.json();
+  } catch {
+    return null;
+  }
+}
 
 export async function handleGame(request, env) {
   const url = new URL(request.url);
   const path = url.pathname;
 
   if (request.method === 'POST' && path === '/api/game') {
-    const body = await request.json();
+    const body = await readBody(request);
+    if (!body) return Response.json({ error: 'Invalid JSON body' }, { status: 400 });
     const { playerName } = body;
     if (!playerName) return Response.json({ error: 'Player name required' }, { status: 400 });
 
@@ -24,7 +32,8 @@ export async function handleGame(request, env) {
   const joinMatch = path.match(/^\/api\/game\/([A-Z0-9]{6})\/join$/);
   if (request.method === 'POST' && joinMatch) {
     const code = joinMatch[1];
-    const body = await request.json();
+    const body = await readBody(request);
+    if (!body) return Response.json({ error: 'Invalid JSON body' }, { status: 400 });
     const { playerName } = body;
     if (!playerName) return Response.json({ error: 'Player name required' }, { status: 400 });
 
@@ -36,7 +45,8 @@ export async function handleGame(request, env) {
   const chooseMatch = path.match(/^\/api\/game\/([A-Z0-9]{6})\/choose$/);
   if (request.method === 'POST' && chooseMatch) {
     const code = chooseMatch[1];
-    const body = await request.json();
+    const body = await readBody(request);
+    if (!body) return Response.json({ error: 'Invalid JSON body' }, { status: 400 });
     const { player, character } = body;
     if (!player || !character) return Response.json({ error: 'Player and character required' }, { status: 400 });
 
@@ -48,7 +58,8 @@ export async function handleGame(request, env) {
   const questionMatch = path.match(/^\/api\/game\/([A-Z0-9]{6})\/ask$/);
   if (request.method === 'POST' && questionMatch) {
     const code = questionMatch[1];
-    const body = await request.json();
+    const body = await readBody(request);
+    if (!body) return Response.json({ error: 'Invalid JSON body' }, { status: 400 });
     const { player, question } = body;
     if (!player || !question) return Response.json({ error: 'Player and question required' }, { status: 400 });
 
@@ -65,7 +76,8 @@ export async function handleGame(request, env) {
   const guessMatch = path.match(/^\/api\/game\/([A-Z0-9]{6})\/guess$/);
   if (request.method === 'POST' && guessMatch) {
     const code = guessMatch[1];
-    const body = await request.json();
+    const body = await readBody(request);
+    if (!body) return Response.json({ error: 'Invalid JSON body' }, { status: 400 });
     const { player, character } = body;
     if (!player || !character) return Response.json({ error: 'Player and character required' }, { status: 400 });
 

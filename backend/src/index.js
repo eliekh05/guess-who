@@ -42,14 +42,14 @@ export default {
 };
 
 function addCors(response) {
-  const headers = new Headers(response.headers);
-  headers.set('Access-Control-Allow-Origin', '*');
-  headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  headers.set('Access-Control-Allow-Headers', 'Content-Type');
+  const corsHeaders = new Headers(response.headers);
+  corsHeaders.set('Access-Control-Allow-Origin', '*');
+  corsHeaders.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  corsHeaders.set('Access-Control-Allow-Headers', 'Content-Type');
 
   if (response.status === 204 || response.headers.get('Content-Length') === '0') {
-    return new Response(null, { ...response, headers });
+    return new Response(null, { status: response.status, statusText: response.statusText, headers: corsHeaders });
   }
 
-  return new Response(response.body, { ...response, headers });
+  return new Response(response.body, { status: response.status, statusText: response.statusText, headers: corsHeaders });
 }

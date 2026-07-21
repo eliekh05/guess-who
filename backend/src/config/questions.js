@@ -23,6 +23,7 @@ export default {
       { text: 'Does your character have blue eyes?', attribute: 'eyeColor', value: 'blue' },
       { text: 'Does your character have brown eyes?', attribute: 'eyeColor', value: 'brown' },
       { text: 'Does your character have green eyes?', attribute: 'eyeColor', value: 'green' },
+      { text: 'Does your character have hazel eyes?', attribute: 'eyeColor', value: 'hazel' },
     ],
   },
   hairLength: {

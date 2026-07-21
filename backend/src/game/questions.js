@@ -45,17 +45,3 @@ function keywordsOverlap(a, b) {
   const setA = new Set(a);
   return b.filter((w) => setA.has(w)).length >= GAME_CONFIG.questionMatch.minWordOverlap;
 }
-
-export function answerQuestion(characters, attribute, value) {
-  return characters.map((char) => ({
-    ...char,
-    eliminated: char.eliminated || char[attribute] !== value,
-  }));
-}
-
-export function eliminateCharacters(characters, attribute, value) {
-  return characters.map((char) => ({
-    ...char,
-    eliminated: char.eliminated || char[attribute] !== value,
-  }));
-}

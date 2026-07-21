@@ -61,6 +61,8 @@
     blue: '#4a90d9',
     brown: '#5c3317',
     green: '#4a9e4a',
+    hazel: '#8e7618',
+    black: '#1a1a1a',
   };
 
   function renderCharacterPortrait(char) {

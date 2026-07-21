@@ -14,17 +14,6 @@ export const GAME_CONFIG = {
 
   // Character scraping
   scrape: {
-    sources: [
-      {
-        url: 'https://guesswho.fandom.com/wiki/Characters',
-        selector: '.article-content table',
-      },
-      {
-        url: 'https://guesswho.fandom.com/wiki/Classic_Characters',
-        selector: '.article-content table',
-      },
-    ],
-    userAgent: 'GuessWhoScraper/1.0 (Educational Project)',
     minCharacters: 20,
   },
 
