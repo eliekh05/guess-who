@@ -1,164 +1,253 @@
+/**
+ * Character scraper for Guess Who?
+ *
+ * Scrapes the Wikipedia Guess Who? character table to get the current
+ * 2018 Hasbro character set with all attributes. Falls back to the
+ * bundled config/characters.js if the scrape fails or the KV cache
+ * is stale/missing.
+ *
+ * KV cache key: "characters:v1"
+ * TTL: 24 hours (characters almost never change; this just picks up
+ *      any future edition updates automatically)
+ */
+
 import FALLBACK_CHARACTERS from '../config/characters.js';
-import { GAME_CONFIG } from '../config/game.js';
 
-const WIKI_API = 'https://en.wikipedia.org/w/api.php';
-const WIKI_PAGE = 'Guess_Who?';
-const WIKI_SECTION = 8; // Characters section
+const WIKI_URL = 'https://en.wikipedia.org/wiki/Guess_Who%3F';
+const CACHE_KEY = 'characters:v1';
+const CACHE_TTL = 60 * 60 * 24; // 24 hours
 
-export async function getCharacters(kv) {
-  if (kv) {
-    const cached = await kv.get(GAME_CONFIG.cache.key, 'json');
-    if (cached) return cached;
-  }
+// Which edition to use — "2018" is the current retail version.
+// The Wikipedia table has a "Introduced" and "Retired" column.
+const CURRENT_EDITION_YEAR = 2018;
 
-  let characters;
-  try {
-    characters = await scrapeCharacters();
-  } catch (err) {
-    console.warn('Wikipedia scrape failed, using fallback:', err.message);
-    characters = FALLBACK_CHARACTERS;
-  }
+// Maps Wikipedia column values → our internal attribute format
+const HAIR_MAP = {
+  'light brown': 'brown',
+  'dark brown': 'dark brown',
+  'brown': 'brown',
+  'blonde': 'blonde',
+  'black': 'black',
+  'white': 'white',
+  'highlights': 'brown', // treated as brown for questioning
+  'ginger': 'red',
+  'red': 'red',
+};
 
-  if (kv) {
-    await kv.put(GAME_CONFIG.cache.key, JSON.stringify(characters), {
-      expirationTtl: GAME_CONFIG.cache.ttl,
-    });
-  }
+const EYE_MAP = {
+  'blue': 'blue',
+  'brown': 'brown',
+  'green': 'green',
+  'hazel': 'brown',
+};
 
-  return characters;
+const SKIN_MAP = {
+  // We infer skin tone from character names for the 2018 cast since
+  // Wikipedia doesn't list it. Used for avatar rendering only.
+  'Gabe': 'dark', 'Laura': 'dark', 'Mia': 'dark',
+  'Daniel': 'medium', 'Farah': 'medium', 'Jordan': 'medium',
+  'Lily': 'medium', 'Mike': 'medium', 'Olivia': 'medium', 'Sofia': 'medium',
+};
+
+function parseBool(val) {
+  return typeof val === 'string' && val.trim().toLowerCase() === 'yes';
 }
 
-async function scrapeCharacters() {
-  const url = `${WIKI_API}?action=parse&page=${encodeURIComponent(WIKI_PAGE)}&format=json&prop=wikitext&section=${WIKI_SECTION}`;
-
-  const res = await fetch(url, {
-    headers: { 'User-Agent': 'GuessWhoScraper/1.0 (Educational Project)' },
-  });
-
-  if (!res.ok) throw new Error(`Wikipedia API returned ${res.status}`);
-
-  const data = await res.json();
-  if (!data.parse?.wikitext?.['*']) throw new Error('No wikitext in response');
-
-  const allChars = parseWikiTable(data.parse.wikitext['*']);
-
-  if (allChars.length < GAME_CONFIG.scrape.minCharacters) {
-    throw new Error(`Only found ${allChars.length} characters, need ${GAME_CONFIG.scrape.minCharacters}`);
-  }
-
-  // Select 24 characters with best attribute diversity
-  return selectBalancedSubset(allChars, 24);
+function normalizeHair(raw) {
+  const lower = (raw || '').toLowerCase().trim();
+  return HAIR_MAP[lower] || lower || 'brown';
 }
 
-function parseWikiTable(wikitext) {
+function normalizeEye(raw) {
+  const lower = (raw || '').toLowerCase().trim();
+  return EYE_MAP[lower] || lower || 'brown';
+}
+
+function inferSkinTone(name) {
+  return SKIN_MAP[name] || 'light';
+}
+
+/**
+ * Parse the Guess Who? Wikipedia page HTML to extract the character table.
+ * Returns an array of character objects for the current edition.
+ */
+function parseWikiCharacters(html) {
+  // Find the character table — it's the one with "Also known as" in the header
+  const tableMatch = html.match(
+    /<table[^>]*>[\s\S]*?Also known as[\s\S]*?<\/table>/i
+  );
+  if (!tableMatch) return null;
+
+  const tableHtml = tableMatch[0];
+
+  // Strip HTML tags for cleaner text extraction
+  const stripTags = (s) => s.replace(/<[^>]+>/g, '').trim();
+
+  // Extract all rows
+  const rowRegex = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
+  const cellRegex = /<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi;
+
+  const rows = [];
+  let rowMatch;
+  while ((rowMatch = rowRegex.exec(tableHtml)) !== null) {
+    const rowHtml = rowMatch[1];
+    const cells = [];
+    let cellMatch;
+    while ((cellMatch = cellRegex.exec(rowHtml)) !== null) {
+      cells.push(stripTags(cellMatch[1]).replace(/\n/g, ' ').trim());
+    }
+    if (cells.length >= 10) rows.push(cells);
+  }
+
+  if (rows.length < 2) return null;
+
+  // First row is the header — find column indices
+  const header = rows[0].map((h) => h.toLowerCase());
+  const col = {
+    name:       header.indexOf('name'),
+    gender:     header.indexOf('gender'),
+    eyes:       header.indexOf('eyes'),
+    hair:       header.indexOf('hair'),
+    beard:      header.indexOf('beard'),
+    moustache:  header.indexOf('moustache'),
+    glasses:    header.indexOf('glasses'),
+    hat:        header.indexOf('hat'),
+    introduced: header.indexOf('introduced'),
+    retired:    header.indexOf('retired'),
+  };
+
   const characters = [];
 
-  for (const row of wikitext.split('|-').slice(1)) {
-    const cells = row.split('||').map((c) => c.trim());
+  for (const row of rows.slice(1)) {
+    const get = (key) => (col[key] >= 0 ? row[col[key]] || '' : '');
 
-    if (cells.length < 11) continue;
+    const name       = get('name').replace(/\[.*?\]/g, '').trim();
+    const introduced = parseInt(get('introduced'), 10) || 0;
+    const retired    = get('retired').replace(/\[.*?\]/g, '').trim();
 
-    const name = cells[0].replace(/^\|\s*/, '').trim().split(',')[0].trim();
-    if (!name || name.startsWith('{') || name === 'Name') continue;
+    if (!name || !introduced) continue;
 
-    const gender = cells[2].trim().toLowerCase();
-    const eyes = extractAfterPipe(cells[3]).toLowerCase();
-    const hair = extractAfterPipe(cells[4]).toLowerCase();
-    const beard = cells[5].includes('yes');
-    const mustache = cells[6].includes('yes');
-    const glasses = cells[8].includes('yes');
-    const hat = cells[9].includes('yes');
+    // Only include characters present in the current edition
+    // "—" or empty retired means still active
+    const isRetired = retired && retired !== '—' && retired !== '-';
+    if (isRetired) {
+      const retiredYear = parseInt(retired, 10) || 9999;
+      if (retiredYear <= CURRENT_EDITION_YEAR) continue;
+    }
+    if (introduced > CURRENT_EDITION_YEAR) continue;
+
+    const gender = get('gender').toLowerCase() === 'female' ? 'female' : 'male';
 
     characters.push({
       name,
-      hairColor: mapHairColor(hair),
-      eyeColor: mapEyeColor(eyes),
       gender,
-      glasses,
-      hat,
-      hairLength: inferHairLength(name),
-      facialHair: beard ? 'beard' : mustache ? 'mustache' : 'none',
-      skinTone: 'light', // Not available from Wikipedia
+      hairColor:  normalizeHair(get('hair')),
+      eyeColor:   normalizeEye(get('eyes')),
+      glasses:    parseBool(get('glasses')),
+      hat:        parseBool(get('hat')),
+      // "facialHair" = has beard OR moustache (classic question is "does your character have facial hair?")
+      facialHair: parseBool(get('beard')) || parseBool(get('moustache')),
+      skinTone:   inferSkinTone(name),
     });
+  }
+
+  return characters.length >= 20 ? characters : null;
+}
+
+/**
+ * Validate that a character list is usable for gameplay.
+ * Must have ≥20 characters with balanced gender and varied attributes.
+ */
+function validateCharacters(chars) {
+  if (!Array.isArray(chars) || chars.length < 20) return false;
+
+  const required = ['name', 'gender', 'hairColor', 'eyeColor', 'glasses', 'hat', 'facialHair'];
+  for (const c of chars) {
+    if (required.some((k) => c[k] === undefined || c[k] === null)) return false;
+  }
+
+  const males   = chars.filter((c) => c.gender === 'male').length;
+  const females = chars.filter((c) => c.gender === 'female').length;
+  if (males < 8 || females < 8) return false;
+
+  const hairColors = new Set(chars.map((c) => c.hairColor));
+  if (hairColors.size < 3) return false;
+
+  return true;
+}
+
+/**
+ * Main entry point — used by session.js and api/characters.js.
+ * Returns characters from (in order of preference):
+ *   1. KV cache (fast, already validated)
+ *   2. Live Wikipedia scrape (fresh, parsed + validated)
+ *   3. Bundled fallback (always works)
+ */
+export async function getCharacters(kv) {
+  // 1. Try KV cache
+  if (kv) {
+    try {
+      const cached = await kv.get(CACHE_KEY, 'json');
+      if (cached && validateCharacters(cached)) {
+        return cached;
+      }
+    } catch (e) {
+      console.warn('KV cache read failed:', e.message);
+    }
+  }
+
+  // 2. Try live Wikipedia scrape
+  let scraped = null;
+  try {
+    const res = await fetch(WIKI_URL, {
+      headers: {
+        'User-Agent': 'GuessWhoGame/1.0 (educational board game app; contact via github)',
+        'Accept': 'text/html',
+      },
+      cf: { cacheTtl: 300, cacheEverything: true },
+    });
+
+    if (res.ok) {
+      const html = await res.text();
+      const parsed = parseWikiCharacters(html);
+      if (parsed && validateCharacters(parsed)) {
+        scraped = parsed;
+        console.log(`Scraped ${scraped.length} characters from Wikipedia`);
+      } else {
+        console.warn('Wikipedia parse returned invalid/insufficient characters');
+      }
+    } else {
+      console.warn(`Wikipedia fetch returned ${res.status}`);
+    }
+  } catch (e) {
+    console.warn('Wikipedia scrape failed:', e.message);
+  }
+
+  const characters = scraped || FALLBACK_CHARACTERS;
+
+  // 3. Cache whatever we got (even fallback) so next request is fast
+  if (kv) {
+    try {
+      await kv.put(CACHE_KEY, JSON.stringify(characters), {
+        expirationTtl: scraped ? CACHE_TTL : 60 * 60, // fallback cached shorter
+      });
+    } catch (e) {
+      console.warn('KV cache write failed:', e.message);
+    }
   }
 
   return characters;
 }
 
-function extractAfterPipe(cell) {
-  const match = cell.match(/\|([A-Za-z ]+?)$/);
-  return match ? match[1].trim() : cell.replace(/[{}]|style="[^"]*"/g, '').trim();
-}
-
-function mapHairColor(raw) {
-  const map = {
-    black: 'black', brown: 'brown', 'light brown': 'brown',
-    'dark brown': 'brown', blonde: 'blonde', red: 'red',
-    white: 'gray', highlights: 'brown', gray: 'gray', grey: 'gray',
-  };
-  return map[raw] || 'brown';
-}
-
-function mapEyeColor(raw) {
-  const map = { blue: 'blue', brown: 'brown', green: 'green', hazel: 'hazel' };
-  return map[raw] || 'brown';
-}
-
-// Wikipedia doesn't have hair length — infer from the character's classic look
-function inferHairLength(name) {
-  const short = ['Al', 'Alex', 'Ben', 'Bernard', 'Bill', 'Charles', 'Daniel', 'David',
-    'Eric', 'Frans', 'Gabe', 'George', 'Herman', 'Joe', 'Jordan', 'Leo', 'Max',
-    'Mike', 'Nick', 'Paul', 'Peter', 'Philip', 'Richard', 'Robert', 'Sam', 'Tom', 'Victor'];
-  const long = ['Amy', 'Anita', 'Betty', 'Carmen', 'Claire', 'Emma', 'Farah',
-    'Holly', 'Katie', 'Laura', 'Lily', 'Liz', 'Maria', 'Mia', 'Olivia',
-    'Rachel', 'Sally', 'Sofia', 'Susan'];
-  if (short.includes(name)) return 'short';
-  if (long.includes(name)) return 'long';
-  return 'medium';
-}
-
-// Select N characters ensuring attribute diversity
-function selectBalancedSubset(all, count) {
-  const selected = [];
-  const seenHair = new Set();
-  const seenEyes = new Set();
-  const seenGender = new Set();
-
-  // First pass: ensure we have all attribute values represented
-  for (const char of all) {
-    if (selected.length >= count) break;
-    const novelty = [
-      !seenHair.has(char.hairColor),
-      !seenEyes.has(char.eyeColor),
-      !seenGender.has(char.gender),
-    ].filter(Boolean).length;
-
-    if (novelty > 0) {
-      selected.push(char);
-      seenHair.add(char.hairColor);
-      seenEyes.add(char.eyeColor);
-      seenGender.add(char.gender);
-    }
+/**
+ * Force-refresh the character cache (call from a scheduled Cron trigger
+ * or admin endpoint to keep data fresh without cold-scrape latency).
+ */
+export async function refreshCharacterCache(kv) {
+  if (kv) {
+    try {
+      await kv.delete(CACHE_KEY);
+    } catch (_) {}
   }
-
-  // Second pass: fill remaining slots
-  for (const char of all) {
-    if (selected.length >= count) break;
-    if (!selected.includes(char)) {
-      selected.push(char);
-    }
-  }
-
-  return selected.slice(0, count);
-}
-
-// CLI: node src/scrape/characters.js
-if (process.argv[1]?.endsWith('characters.js')) {
-  scrapeCharacters().then((chars) => {
-    console.log(JSON.stringify(chars, null, 2));
-  }).catch((err) => {
-    console.error('Scrape failed:', err.message);
-    console.log('Using fallback characters');
-    console.log(JSON.stringify(FALLBACK_CHARACTERS, null, 2));
-  });
+  return getCharacters(kv);
 }

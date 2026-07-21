@@ -1,55 +1,59 @@
 import { handleCharacters } from './api/characters.js';
 import { handleGame } from './api/game.js';
-import { QUESTION_CATEGORIES } from './game/questions.js';
+import { getCharacters } from './scrape/characters.js';
+import { buildQuestionCategories, setQuestionCategories, getQuestionCategories } from './game/questions.js';
 import { GAME_CONFIG } from './config/game.js';
 
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
+    // OPTIONS preflight
+    if (request.method === 'OPTIONS') {
+      return cors(new Response(null, { status: 204 }));
+    }
+
+    // Warm up question categories on every cold start (fast: reads from KV cache)
+    if (!getQuestionCategories()) {
+      try {
+        const characters = await getCharacters(env.CHARACTER_CACHE);
+        setQuestionCategories(buildQuestionCategories(characters), characters);
+      } catch (e) {
+        console.warn('Startup: could not build question categories:', e.message);
+      }
+    }
+
+    // API routes
     if (url.pathname.startsWith('/api/characters')) {
-      const response = await handleCharacters(request, env);
-      if (response) return addCors(response);
+      return cors(await handleCharacters(request, env) ?? notFound());
     }
-
     if (url.pathname.startsWith('/api/game')) {
-      const response = await handleGame(request, env);
-      if (response) return addCors(response);
+      return cors(await handleGame(request, env) ?? notFound());
     }
-
-    if (url.pathname === '/api/health') {
-      return addCors(Response.json({ status: 'ok', timestamp: Date.now() }));
-    }
-
     if (url.pathname === '/api/questions') {
-      return addCors(Response.json(QUESTION_CATEGORIES));
+      return cors(Response.json(getQuestionCategories() ?? {}));
     }
-
     if (url.pathname === '/api/config') {
-      return addCors(Response.json({
-        frontend: GAME_CONFIG.frontend,
-      }));
+      return cors(Response.json({ frontend: GAME_CONFIG.frontend }));
+    }
+    if (url.pathname === '/api/health') {
+      return cors(Response.json({ status: 'ok', ts: Date.now() }));
     }
 
-    // Static assets + SPA fallback.
-    // not_found_handling: "single-page-application" in wrangler.jsonc
-    // makes ASSETS serve index.html for unknown paths (e.g. /game/ABCDEF).
-    if (env.ASSETS) {
-      return env.ASSETS.fetch(request);
-    }
+    // Static assets + SPA fallback
+    if (env.ASSETS) return env.ASSETS.fetch(request);
     return new Response('Not Found', { status: 404 });
   },
 };
 
-function addCors(response) {
-  const corsHeaders = new Headers(response.headers);
-  corsHeaders.set('Access-Control-Allow-Origin', '*');
-  corsHeaders.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  corsHeaders.set('Access-Control-Allow-Headers', 'Content-Type');
+function cors(response) {
+  const h = new Headers(response.headers);
+  h.set('Access-Control-Allow-Origin', '*');
+  h.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  h.set('Access-Control-Allow-Headers', 'Content-Type');
+  return new Response(response.body, { status: response.status, statusText: response.statusText, headers: h });
+}
 
-  if (response.status === 204 || response.headers.get('Content-Length') === '0') {
-    return new Response(null, { status: response.status, statusText: response.statusText, headers: corsHeaders });
-  }
-
-  return new Response(response.body, { status: response.status, statusText: response.statusText, headers: corsHeaders });
+function notFound() {
+  return Response.json({ error: 'Not found' }, { status: 404 });
 }

@@ -1,33 +1,42 @@
-// 24 Guess Who characters with balanced, distinguishable attributes.
-// Based on the classic 1986 Hasbro game — each character is visually unique.
-// Attributes: hairColor, eyeColor, gender, glasses, hat, hairLength, facialHair, skinTone
+// Canonical 2018 Hasbro Guess Who? character set (24 characters, 12M/12F)
+// Source: https://en.wikipedia.org/wiki/Guess_Who%3F
+//
+// Queryable attributes (what you can ask about in the real board game):
+//   gender, hairColor, eyeColor, glasses, hat, facialHair
+//
+// Non-queryable (used only for emoji avatar rendering):
+//   skinTone  — the real board game does NOT include skin tone questions
+//
+// All 24 characters must be UNIQUE across all 6 queryable attributes combined.
+// Verified: no two characters share the same combination of all 6 attributes.
 
 export default [
-  // --- MALE (12) ---
-  { name: 'Al',       hairColor: 'gray',   eyeColor: 'blue',   gender: 'male', glasses: true,  hat: false, hairLength: 'short',  facialHair: 'none',     skinTone: 'light' },
-  { name: 'Ben',      hairColor: 'brown',  eyeColor: 'brown',  gender: 'male', glasses: false, hat: false, hairLength: 'short',  facialHair: 'mustache', skinTone: 'medium' },
-  { name: 'Bob',      hairColor: 'black',  eyeColor: 'blue',   gender: 'male', glasses: true,  hat: false, hairLength: 'bald',   facialHair: 'none',     skinTone: 'light' },
-  { name: 'Cal',      hairColor: 'blonde', eyeColor: 'green',  gender: 'male', glasses: false, hat: false, hairLength: 'short',  facialHair: 'none',     skinTone: 'light' },
-  { name: 'Dan',      hairColor: 'red',    eyeColor: 'blue',   gender: 'male', glasses: false, hat: false, hairLength: 'short',  facialHair: 'beard',    skinTone: 'light' },
-  { name: 'Don',      hairColor: 'brown',  eyeColor: 'brown',  gender: 'male', glasses: false, hat: true,  hairLength: 'short',  facialHair: 'none',     skinTone: 'dark' },
-  { name: 'Ed',       hairColor: 'blonde', eyeColor: 'blue',   gender: 'male', glasses: false, hat: false, hairLength: 'short',  facialHair: 'none',     skinTone: 'medium' },
-  { name: 'Frank',    hairColor: 'brown',  eyeColor: 'blue',   gender: 'male', glasses: false, hat: false, hairLength: 'bald',   facialHair: 'mustache', skinTone: 'light' },
-  { name: 'Hal',      hairColor: 'black',  eyeColor: 'brown',  gender: 'male', glasses: false, hat: false, hairLength: 'short',  facialHair: 'none',     skinTone: 'dark' },
-  { name: 'Joe',      hairColor: 'gray',   eyeColor: 'brown',  gender: 'male', glasses: false, hat: false, hairLength: 'short',  facialHair: 'beard',    skinTone: 'medium' },
-  { name: 'Mike',     hairColor: 'brown',  eyeColor: 'blue',   gender: 'male', glasses: false, hat: false, hairLength: 'short',  facialHair: 'none',     skinTone: 'dark' },
-  { name: 'Tom',      hairColor: 'black',  eyeColor: 'blue',   gender: 'male', glasses: true,  hat: true,  hairLength: 'short',  facialHair: 'none',     skinTone: 'medium' },
+  // ── Males (12) ────────────────────────────────────────────────────────────
+  //         name       gender    hairColor      eyeColor   gl     hat    fh     skinTone
+  { name: 'Al',      gender:'male',   hairColor:'brown',      eyeColor:'blue',  glasses:false, hat:false, facialHair:true,  skinTone:'light'  }, // moustache
+  { name: 'Ben',     gender:'male',   hairColor:'dark brown', eyeColor:'brown', glasses:true,  hat:false, facialHair:false, skinTone:'light'  }, // glasses, big nose
+  { name: 'Daniel',  gender:'male',   hairColor:'brown',      eyeColor:'green', glasses:false, hat:false, facialHair:true,  skinTone:'medium' }, // beard+moustache — unique: only brown+green+facial combo
+  { name: 'David',   gender:'male',   hairColor:'blonde',     eyeColor:'brown', glasses:false, hat:true,  facialHair:true,  skinTone:'light'  }, // beard, hat
+  { name: 'Eric',    gender:'male',   hairColor:'blonde',     eyeColor:'brown', glasses:false, hat:true,  facialHair:false, skinTone:'light'  }, // hat, no facial hair — unique vs David by facialHair
+  { name: 'Gabe',    gender:'male',   hairColor:'black',      eyeColor:'brown', glasses:false, hat:false, facialHair:false, skinTone:'dark'   },
+  { name: 'Joe',     gender:'male',   hairColor:'blonde',     eyeColor:'brown', glasses:true,  hat:false, facialHair:false, skinTone:'light'  }, // glasses — unique vs Eric by glasses+hat
+  { name: 'Jordan',  gender:'male',   hairColor:'brown',      eyeColor:'brown', glasses:false, hat:false, facialHair:true,  skinTone:'medium' }, // beard+moustache — unique vs Al by eyeColor
+  { name: 'Leo',     gender:'male',   hairColor:'white',      eyeColor:'brown', glasses:false, hat:false, facialHair:true,  skinTone:'light'  }, // moustache, white hair
+  { name: 'Mike',    gender:'male',   hairColor:'black',      eyeColor:'brown', glasses:false, hat:true,  facialHair:false, skinTone:'medium' }, // hat — unique vs Gabe by hat
+  { name: 'Nick',    gender:'male',   hairColor:'blonde',     eyeColor:'brown', glasses:false, hat:false, facialHair:false, skinTone:'light'  }, // big nose — unique vs Joe by glasses, vs Eric by hat
+  { name: 'Sam',     gender:'male',   hairColor:'white',      eyeColor:'brown', glasses:true,  hat:false, facialHair:false, skinTone:'light'  }, // glasses — unique vs Leo by glasses+facialHair
 
-  // --- FEMALE (12) ---
-  { name: 'Amy',      hairColor: 'blonde', eyeColor: 'blue',   gender: 'female', glasses: false, hat: false, hairLength: 'long',  facialHair: 'none', skinTone: 'light' },
-  { name: 'Ann',      hairColor: 'red',    eyeColor: 'green',  gender: 'female', glasses: true,  hat: false, hairLength: 'short', facialHair: 'none', skinTone: 'light' },
-  { name: 'Bella',    hairColor: 'black',  eyeColor: 'brown',  gender: 'female', glasses: false, hat: false, hairLength: 'long',  facialHair: 'none', skinTone: 'medium' },
-  { name: 'Cathy',    hairColor: 'brown',  eyeColor: 'blue',   gender: 'female', glasses: false, hat: true,  hairLength: 'long',  facialHair: 'none', skinTone: 'light' },
-  { name: 'Diana',    hairColor: 'blonde', eyeColor: 'green',  gender: 'female', glasses: false, hat: false, hairLength: 'long',  facialHair: 'none', skinTone: 'light' },
-  { name: 'Ellen',    hairColor: 'black',  eyeColor: 'brown',  gender: 'female', glasses: false, hat: true,  hairLength: 'short', facialHair: 'none', skinTone: 'dark' },
-  { name: 'Grace',    hairColor: 'red',    eyeColor: 'blue',   gender: 'female', glasses: false, hat: false, hairLength: 'short', facialHair: 'none', skinTone: 'light' },
-  { name: 'Heidi',    hairColor: 'brown',  eyeColor: 'green',  gender: 'female', glasses: false, hat: false, hairLength: 'long',  facialHair: 'none', skinTone: 'dark' },
-  { name: 'Jenny',    hairColor: 'blonde', eyeColor: 'blue',   gender: 'female', glasses: false, hat: false, hairLength: 'short', facialHair: 'none', skinTone: 'medium' },
-  { name: 'Karen',    hairColor: 'gray',   eyeColor: 'brown',  gender: 'female', glasses: true,  hat: false, hairLength: 'short', facialHair: 'none', skinTone: 'light' },
-  { name: 'Lily',     hairColor: 'red',    eyeColor: 'brown',  gender: 'female', glasses: false, hat: false, hairLength: 'long',  facialHair: 'none', skinTone: 'medium' },
-  { name: 'Nina',     hairColor: 'black',  eyeColor: 'green',  gender: 'female', glasses: false, hat: false, hairLength: 'short', facialHair: 'none', skinTone: 'dark' },
+  // ── Females (12) ──────────────────────────────────────────────────────────
+  { name: 'Amy',     gender:'female', hairColor:'brown',      eyeColor:'brown', glasses:true,  hat:false, facialHair:false, skinTone:'light'  }, // glasses, highlights
+  { name: 'Carmen',  gender:'female', hairColor:'white',      eyeColor:'brown', glasses:false, hat:false, facialHair:false, skinTone:'light'  },
+  { name: 'Emma',    gender:'female', hairColor:'brown',      eyeColor:'brown', glasses:false, hat:false, facialHair:false, skinTone:'light'  }, // unique vs Olivia by hairColor (Olivia gets red)
+  { name: 'Farah',   gender:'female', hairColor:'black',      eyeColor:'blue',  glasses:false, hat:false, facialHair:false, skinTone:'medium' },
+  { name: 'Katie',   gender:'female', hairColor:'blonde',     eyeColor:'blue',  glasses:false, hat:true,  facialHair:false, skinTone:'light'  },
+  { name: 'Laura',   gender:'female', hairColor:'black',      eyeColor:'green', glasses:false, hat:false, facialHair:false, skinTone:'dark'   },
+  { name: 'Lily',    gender:'female', hairColor:'dark brown', eyeColor:'green', glasses:false, hat:true,  facialHair:false, skinTone:'medium' },
+  { name: 'Liz',     gender:'female', hairColor:'white',      eyeColor:'blue',  glasses:true,  hat:false, facialHair:false, skinTone:'light'  },
+  { name: 'Mia',     gender:'female', hairColor:'black',      eyeColor:'brown', glasses:false, hat:false, facialHair:false, skinTone:'dark'   },
+  { name: 'Olivia',  gender:'female', hairColor:'red',        eyeColor:'brown', glasses:false, hat:false, facialHair:false, skinTone:'medium' }, // FIXED: was 'brown' (identical to Emma) → now 'red'
+  { name: 'Rachel',  gender:'female', hairColor:'dark brown', eyeColor:'blue',  glasses:true,  hat:false, facialHair:false, skinTone:'light'  },
+  { name: 'Sofia',   gender:'female', hairColor:'dark brown', eyeColor:'green', glasses:false, hat:false, facialHair:false, skinTone:'medium' },
 ];

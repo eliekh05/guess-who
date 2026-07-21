@@ -4,112 +4,152 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Guess Who?</title>
-  <meta name="description" content="The classic Guess Who? board game - play online with friends">
+  <meta name="description" content="The classic Guess Who? board game — play online with a friend">
   <meta name="theme-color" content="#1a1a2e">
   <link rel="manifest" href="/manifest.json">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-  <div id="app">
-    <!-- Landing Screen -->
-    <div id="screen-landing" class="screen active">
-      <div class="logo">
-        <h1>Guess Who?</h1>
-        <p class="tagline">The Classic Deduction Game</p>
-      </div>
-      <div class="menu">
-        <div class="input-group">
-          <label for="player-name">Your Name</label>
-          <input type="text" id="player-name" placeholder="Enter your name" maxlength="20" autocomplete="off">
-        </div>
-        <button id="btn-create" class="btn btn-primary">Create Game</button>
-      </div>
-      <div id="landing-error" class="error-msg"></div>
+<div id="app">
+
+  <!-- ── Landing ─────────────────────────────────────────────────────────── -->
+  <div id="screen-landing" class="screen active">
+    <div class="logo">
+      <div class="logo-icon">🤔</div>
+      <h1>Guess Who?</h1>
+      <p class="tagline">The Classic Deduction Game</p>
     </div>
-
-    <!-- Join Screen (shown when opening /game/CODE link) -->
-    <div id="screen-join" class="screen">
-      <div class="logo">
-        <h1>Guess Who?</h1>
-        <p class="tagline">You've been invited to play!</p>
+    <div class="menu">
+      <div class="input-group">
+        <label for="player-name">Your Name</label>
+        <input id="player-name" type="text" placeholder="Enter your name" maxlength="20" autocomplete="off" autofocus>
       </div>
-      <div class="menu">
-        <div class="input-group">
-          <label for="join-name">Your Name</label>
-          <input type="text" id="join-name" placeholder="Enter your name" maxlength="20" autocomplete="off">
-        </div>
-        <button id="btn-join-game" class="btn btn-primary">Join Game</button>
-      </div>
-      <div id="join-error" class="error-msg"></div>
+      <button id="btn-create" class="btn btn-primary">Create Game</button>
+      <p class="hint-small">Then share the link with a friend to play 2-player</p>
     </div>
-
-
-    <!-- Waiting Screen -->
-    <div id="screen-waiting" class="screen">
-      <div class="waiting-content">
-        <div class="spinner"></div>
-        <h2>Waiting for opponent...</h2>
-        <p class="hint">Share this link with your friend</p>
-        <div class="share-link-box">
-          <input type="text" id="share-link" class="share-link-input" readonly>
-          <button id="btn-copy-link" class="btn-icon" title="Copy link">📋</button>
-        </div>
-        <div id="copy-toast" class="toast">Copied!</div>
-      </div>
+    <div id="landing-error" class="error-msg"></div>
+    <div class="how-to-play">
+      <h3>How to play</h3>
+      <ol>
+        <li>Each player secretly picks one of the 24 characters.</li>
+        <li>Take turns asking YES/NO questions about physical features.</li>
+        <li>Flip down characters that don't match the answers.</li>
+        <li>When you're confident, <strong>guess who their character is</strong>!</li>
+        <li>⚠️ A wrong guess means you <strong>lose instantly</strong>.</li>
+      </ol>
     </div>
+  </div>
 
-    <!-- Character Selection Screen -->
-    <div id="screen-select" class="screen">
-      <h2>Choose Your Character</h2>
-      <p class="subtitle">Pick someone to keep secret</p>
-      <div id="select-board" class="character-grid"></div>
+  <!-- ── Join ──────────────────────────────────────────────────────────────── -->
+  <div id="screen-join" class="screen">
+    <div class="logo">
+      <div class="logo-icon">🤔</div>
+      <h1>Guess Who?</h1>
+      <p class="tagline">You've been invited to play!</p>
     </div>
-
-    <!-- Game Screen -->
-    <div id="screen-game" class="screen">
-      <div class="game-header">
-        <div class="turn-info">
-          <span id="turn-label" class="turn-badge">Your Turn</span>
-          <span id="question-count" class="q-count">0 / 25</span>
-        </div>
-        <div id="game-status" class="status-bar"></div>
+    <div class="menu">
+      <div class="input-group">
+        <label for="join-name">Your Name</label>
+        <input id="join-name" type="text" placeholder="Enter your name" maxlength="20" autocomplete="off" autofocus>
       </div>
-
-      <div class="question-area">
-        <div id="question-history" class="history"></div>
-        <div class="ask-form">
-          <select id="question-select">
-            <option value="">Ask a question...</option>
-          </select>
-          <button id="btn-ask" class="btn btn-primary" disabled>Ask</button>
-        </div>
-      </div>
-
-      <div class="board-section">
-        <h3>Your Board</h3>
-        <div id="my-board" class="character-grid"></div>
-      </div>
-
-      <div id="guess-section" class="guess-section hidden">
-        <h3>Make Your Guess!</h3>
-        <p>You have 1 character remaining. Who is it?</p>
-        <div id="remaining-chars" class="remaining-list"></div>
-      </div>
+      <button id="btn-join-game" class="btn btn-primary">Join Game</button>
     </div>
+    <div id="join-error" class="error-msg"></div>
+  </div>
 
-    <!-- Game Over Screen -->
-    <div id="screen-gameover" class="screen">
-      <div id="gameover-content" class="gameover">
-        <div id="gameover-icon" class="gameover-icon"></div>
-        <h2 id="gameover-title"></h2>
-        <p id="gameover-message"></p>
-        <div id="gameover-reveal" class="reveal-card"></div>
-        <button id="btn-play-again" class="btn btn-primary">Play Again</button>
+  <!-- ── Waiting ────────────────────────────────────────────────────────────── -->
+  <div id="screen-waiting" class="screen">
+    <div class="waiting-content">
+      <div class="spinner"></div>
+      <h2 id="waiting-msg">Waiting for opponent…</h2>
+      <p id="waiting-hint" class="hint">Share this link with your friend:</p>
+      <div id="share-link-box" class="share-link-box">
+        <input id="share-link" type="text" class="share-link-input" readonly>
+        <button id="btn-copy-link" class="btn-icon" title="Copy link">📋</button>
       </div>
     </div>
   </div>
 
-  <script src="/app.js"></script>
+  <!-- ── Character selection ───────────────────────────────────────────────── -->
+  <div id="screen-select" class="screen">
+    <div class="select-header">
+      <h2>Choose Your Character</h2>
+      <p class="subtitle">Pick the character your opponent will try to guess.<br>Keep it secret!</p>
+    </div>
+    <div id="select-board" class="character-grid"></div>
+  </div>
+
+  <!-- ── Game ──────────────────────────────────────────────────────────────── -->
+  <div id="screen-game" class="screen">
+
+    <!-- Turn banner -->
+    <div class="game-header">
+      <span id="turn-label" class="turn-badge">Your Turn</span>
+      <span id="question-count" class="q-count">0 / 25 questions</span>
+    </div>
+    <div id="game-status" class="status-bar"></div>
+
+    <!-- My secret character reminder -->
+    <div id="my-character-display" class="my-char-display" style="display:none">
+      <div id="my-character-avatar" class="my-char-avatar"></div>
+      <div>
+        <div class="my-char-label">Your secret character</div>
+        <div id="my-character-name" class="my-char-name"></div>
+        <div id="my-character-attrs" class="my-char-attrs"></div>
+      </div>
+    </div>
+
+    <!-- Question history -->
+    <div id="question-history" class="history"></div>
+
+    <!-- Ask a question (your turn only) -->
+    <div class="ask-form">
+      <select id="question-select" disabled>
+        <option value="">Select a question to ask…</option>
+      </select>
+      <button id="btn-ask" class="btn btn-primary" disabled>Ask</button>
+    </div>
+
+    <!-- Guess section — always visible but button disabled on opponent's turn -->
+    <div id="guess-section" class="guess-section hidden">
+      <div class="guess-header">
+        <h3>Make Your Guess</h3>
+        <p id="remaining-count" class="remaining-count"></p>
+      </div>
+      <div class="guess-form">
+        <select id="guess-select">
+          <option value="">— who do you think it is? —</option>
+        </select>
+        <button id="btn-guess" class="btn btn-danger" disabled>Guess!</button>
+      </div>
+      <p class="guess-warning">⚠️ Wrong guess = instant loss!</p>
+    </div>
+
+    <!-- The board -->
+    <div class="board-section">
+      <h3 class="board-label">Your Board <span class="board-hint">(flip down eliminated characters)</span></h3>
+      <div id="my-board" class="character-grid"></div>
+    </div>
+
+  </div>
+
+  <!-- ── Game over ─────────────────────────────────────────────────────────── -->
+  <div id="screen-gameover" class="screen">
+    <div class="gameover">
+      <div id="gameover-icon" class="gameover-icon"></div>
+      <h2 id="gameover-title"></h2>
+      <p id="gameover-message" class="gameover-msg"></p>
+      <div id="gameover-reveal" class="reveal-card"></div>
+      <button id="btn-play-again" class="btn btn-primary">Play Again</button>
+    </div>
+  </div>
+
+</div><!-- #app -->
+
+<!-- Single global toast -->
+<div id="toast" class="toast"></div>
+
+<script src="/app.js"></script>
 </body>
 </html>
