@@ -366,8 +366,8 @@
 
       // Big clear answer display
       const ansMsg = data.answer
-        ? '✅ YES — they have it! Flip down everyone who doesn\'t.'
-        : '❌ NO — they don\'t have it! Flip down everyone who does.';
+        ? '✅ YES — their character has it! Everyone who doesn\'t has been eliminated.'
+        : '❌ NO — their character doesn\'t have it! Everyone who does has been eliminated.';
       toast(ansMsg, 3500);
 
       if (gameState.status === 'finished') showGameOver();
